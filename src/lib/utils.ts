@@ -1,0 +1,44 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { success: false; error: string };
+
+export function formatDate(date: Date | string | null | undefined) {
+  if (!date) return "—";
+  const value = typeof date === "string" ? new Date(date) : date;
+  return value.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+export function formatDateTime(date: Date | string | null | undefined) {
+  if (!date) return "—";
+  const value = typeof date === "string" ? new Date(date) : date;
+  return value.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function isOverdue(expectedReturnAt: string | Date | null | undefined) {
+  if (!expectedReturnAt) return false;
+  const expected =
+    typeof expectedReturnAt === "string"
+      ? new Date(expectedReturnAt)
+      : expectedReturnAt;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  expected.setHours(0, 0, 0, 0);
+  return expected < today;
+}
