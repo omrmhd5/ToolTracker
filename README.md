@@ -27,11 +27,12 @@ cp .env.example .env
 docker compose up -d
 ```
 
-4. **Run migrations**
+4. **Run migrations and seed admin**
 
 ```bash
 npm run db:generate   # only needed after schema changes
 npm run db:migrate
+npm run db:seed
 ```
 
 5. **Start the dev server**
@@ -40,7 +41,12 @@ npm run db:migrate
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — you'll land on the dashboard with the sidebar layout.
+Open [http://localhost:3000](http://localhost:3000) — sign in with the seeded admin credentials from `.env`.
+
+Default seed credentials (from `.env.example`):
+
+- Email: `admin@tooltracker.local`
+- Password: `admin123`
 
 6. **Browse the database (optional)**
 
@@ -54,10 +60,17 @@ npm run db:studio
 
 - Next.js 15 + TypeScript + Tailwind
 - Drizzle schema for `users`, `customers`, `tools`, `checkout_logs`
-- Docker Compose for Postgres 16
+- Docker Compose for Postgres 18
 - Sidebar layout shell with placeholder pages
 
-Upcoming increments: auth, admin CRUD, checkout flows, search, dashboard, polish.
+**Increment 2 (Auth)** — complete
+
+- Auth.js credentials login at `/login`
+- Middleware: auth required, `/admin` admin-only
+- Seed script for first admin (`npm run db:seed`)
+- Admin user management at `/admin/users`
+
+Upcoming increments: admin CRUD (customers/tools), checkout flows, search, dashboard, polish.
 
 ## Scripts
 

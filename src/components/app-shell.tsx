@@ -1,6 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 
-export function AppShell({
+export async function AppShell({
   children,
   currentPath,
   title,

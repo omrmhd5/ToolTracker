@@ -1,20 +1,34 @@
+import { redirect } from "next/navigation";
+import { getUsers } from "@/actions/users";
 import { AppShell } from "@/components/app-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UsersManager } from "@/components/users-manager";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
-export default function AdminUsersPage() {
+export default async function AdminUsersPage() {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
+  const users = await getUsers();
+
   return (
     <AppShell
       currentPath="/admin/users"
       title="Users"
-      description="Manage user accounts">
+      description="Manage user accounts"
+    >
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
+          <CardTitle>User accounts</CardTitle>
+          <CardDescription>
+            Create and manage login accounts. Deactivated users cannot sign in.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Coming in Increment 2.
-          </p>
+          <UsersManager users={users} currentUserId={session.user.id} />
         </CardContent>
       </Card>
     </AppShell>
