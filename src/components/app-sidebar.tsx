@@ -1,12 +1,10 @@
 import Link from "next/link";
 import {
-  ArrowLeftRight,
   ArrowRightLeft,
   History,
   LayoutDashboard,
   LogOut,
   Package,
-  Search,
   Settings,
   Users,
   Wrench,
@@ -19,9 +17,7 @@ import { Button } from "@/components/ui/button";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/checkout", label: "Check Out", icon: ArrowRightLeft },
-  { href: "/checkin", label: "Check In", icon: ArrowLeftRight },
+  { href: "/operations", label: "Check In / Out", icon: ArrowRightLeft },
   { href: "/history", label: "History", icon: History },
 ];
 
@@ -52,7 +48,8 @@ export async function AppSidebar({ currentPath }: { currentPath: string }) {
         {mainNav.map((item) => {
           const Icon = item.icon;
           const active =
-            currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+            currentPath === item.href ||
+            currentPath.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -62,8 +59,7 @@ export async function AppSidebar({ currentPath }: { currentPath: string }) {
                 active
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-              )}
-            >
+              )}>
               <Icon className="h-4 w-4" />
               {item.label}
             </Link>
@@ -79,7 +75,8 @@ export async function AppSidebar({ currentPath }: { currentPath: string }) {
             {adminNav.map((item) => {
               const Icon = item.icon;
               const active =
-                currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+                currentPath === item.href ||
+                currentPath.startsWith(`${item.href}/`);
               return (
                 <Link
                   key={item.href}
@@ -89,8 +86,7 @@ export async function AppSidebar({ currentPath }: { currentPath: string }) {
                     active
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                  )}
-                >
+                  )}>
                   <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>
@@ -104,16 +100,19 @@ export async function AppSidebar({ currentPath }: { currentPath: string }) {
         {session?.user ? (
           <div className="px-1">
             <p className="text-sm font-medium">{session.user.name}</p>
-            <p className="text-xs text-muted-foreground">{session.user.email}</p>
-            <p className="mt-1 text-xs capitalize text-muted-foreground">{session.user.role}</p>
+            <p className="text-xs text-muted-foreground">
+              {session.user.email}
+            </p>
+            <p className="mt-1 text-xs capitalize text-muted-foreground">
+              {session.user.role}
+            </p>
           </div>
         ) : null}
         <form
           action={async () => {
             "use server";
             await signOut({ redirectTo: "/login" });
-          }}
-        >
+          }}>
           <Button type="submit" variant="outline" size="sm" className="w-full">
             <LogOut className="h-4 w-4" />
             Sign out
