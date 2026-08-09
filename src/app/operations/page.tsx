@@ -1,8 +1,5 @@
 import { Suspense } from "react";
-import {
-  getCustomersForCheckout,
-  getToolsForOperations,
-} from "@/actions/checkout";
+import { getToolsForOperations } from "@/actions/checkout";
 import { AppShell } from "@/components/app-shell";
 import { ToolOperationsManager } from "@/components/tool-operations-manager";
 import {
@@ -31,12 +28,9 @@ async function OperationsContent({
       : "ALL";
   const page = Math.max(1, Number(params.page) || 1);
 
-  const [data, customers] = await Promise.all([
-    getToolsForOperations({ status, q: params.q, page }),
-    getCustomersForCheckout(),
-  ]);
+  const data = await getToolsForOperations({ status, q: params.q, page });
 
-  return <ToolOperationsManager {...data} customers={customers} />;
+  return <ToolOperationsManager {...data} />;
 }
 
 export default function OperationsPage({

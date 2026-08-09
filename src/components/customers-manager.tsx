@@ -148,20 +148,20 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        title="Edit"
                         onClick={() => openEdit(customer)}>
                         <Pencil className="h-4 w-4" />
-                        Edit
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        title="Delete"
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(customer);
                         }}>
                         <Trash2 className="h-4 w-4" />
-                        Delete
                       </Button>
                     </div>
                   </td>

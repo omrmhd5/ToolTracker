@@ -42,3 +42,23 @@ export function isOverdue(expectedReturnAt: string | Date | null | undefined) {
   expected.setHours(0, 0, 0, 0);
   return expected < today;
 }
+
+const CHECK_IN_NOTE_MARKER = "\nCheck-in: ";
+
+export function parseCheckoutNotes(notes: string | null | undefined) {
+  if (!notes?.trim()) {
+    return { checkoutNote: null, checkInNote: null };
+  }
+
+  const index = notes.indexOf(CHECK_IN_NOTE_MARKER);
+
+  if (index === -1) {
+    return { checkoutNote: notes.trim(), checkInNote: null };
+  }
+
+  return {
+    checkoutNote: notes.slice(0, index).trim() || null,
+    checkInNote:
+      notes.slice(index + CHECK_IN_NOTE_MARKER.length).trim() || null,
+  };
+}

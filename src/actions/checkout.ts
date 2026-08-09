@@ -9,6 +9,7 @@ import { checkInSchema, checkOutSchema } from "@/lib/validations/checkout";
 import type { ActionResult } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
+const CUSTOMER_PAGE_SIZE = 10;
 
 function buildSearchCondition(term: string) {
   const pattern = `%${term}%`;
@@ -82,6 +83,20 @@ export async function getToolsForOperations(filters?: {
       customerSpecialization: customers.specialization,
       checkedOutAt: checkoutLogs.checkedOutAt,
       expectedReturnAt: checkoutLogs.expectedReturnAt,
+      notes: sql<string | null>`
+        CASE
+          WHEN ${tools.status} = 'OUT' THEN ${checkoutLogs.notes}
+          ELSE (
+            SELECT cl.notes
+            FROM checkout_logs cl
+            WHERE cl.tool_local_id = ${tools.localId}
+              AND cl.notes IS NOT NULL
+              AND btrim(cl.notes) <> ''
+            ORDER BY cl.checked_out_at DESC
+            LIMIT 1
+          )
+        END
+      `,
     })
     .from(tools)
     .leftJoin(
@@ -129,19 +144,72 @@ export async function getToolsForOperations(filters?: {
   };
 }
 
-export async function getCustomersForCheckout() {
+export async function searchCustomersForCheckout(filters?: {
+  q?: string;
+  page?: number;
+}) {
   await requireAuth();
 
-  return db
+  const page = Math.max(1, filters?.page ?? 1);
+  const offset = (page - 1) * CUSTOMER_PAGE_SIZE;
+  const conditions = [];
+
+  if (filters?.q?.trim()) {
+    const pattern = `%${filters.q.trim()}%`;
+    conditions.push(
+      or(
+        ilike(customers.employeeId, pattern),
+        ilike(customers.name, pattern),
+        ilike(customers.specialization, pattern),
+      ),
+    );
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const baseSelect = db
     .select({
       id: customers.id,
       employeeId: customers.employeeId,
       name: customers.name,
       specialization: customers.specialization,
     })
-    .from(customers)
-    .orderBy(customers.name);
+    .from(customers);
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(customers);
+
+  const [countRow] = whereClause
+    ? await countQuery.where(whereClause)
+    : await countQuery;
+
+  const total = Number(countRow?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / CUSTOMER_PAGE_SIZE));
+
+  const rows = whereClause
+    ? await baseSelect
+        .where(whereClause)
+        .orderBy(customers.name)
+        .limit(CUSTOMER_PAGE_SIZE)
+        .offset(offset)
+    : await baseSelect
+        .orderBy(customers.name)
+        .limit(CUSTOMER_PAGE_SIZE)
+        .offset(offset);
+
+  return {
+    customers: rows,
+    total,
+    page,
+    pageSize: CUSTOMER_PAGE_SIZE,
+    totalPages,
+  };
 }
+
+export type CustomerOption = Awaited<
+  ReturnType<typeof searchCustomersForCheckout>
+>["customers"][number];
 
 export async function checkOutTool(
   input: unknown,
@@ -224,6 +292,7 @@ export async function checkOutTool(
 
     revalidatePath("/operations");
     revalidatePath("/dashboard");
+    revalidatePath("/history");
     revalidatePath("/admin/tools");
 
     return { success: true, data: { checkoutLogId: result.id } };
@@ -307,6 +376,7 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
 
     revalidatePath("/operations");
     revalidatePath("/dashboard");
+    revalidatePath("/history");
     revalidatePath("/admin/tools");
 
     return { success: true };

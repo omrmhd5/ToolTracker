@@ -109,7 +109,9 @@ export function UsersManager({
       </div>
 
       {users.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No users yet. Add the first user.</p>
+        <p className="text-sm text-muted-foreground">
+          No users yet. Add the first user.
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
@@ -127,9 +129,12 @@ export function UsersManager({
               {users.map((user) => (
                 <tr key={user.id} className="border-b last:border-0">
                   <td className="px-4 py-3">{user.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {user.email}
+                  </td>
                   <td className="px-4 py-3">
-                    <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                    <Badge
+                      variant={user.role === "admin" ? "default" : "secondary"}>
                       {user.role}
                     </Badge>
                   </td>
@@ -142,9 +147,12 @@ export function UsersManager({
                     {formatDateTime(user.createdAt)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(user)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      title="Edit"
+                      onClick={() => openEdit(user)}>
                       <Pencil className="h-4 w-4" />
-                      Edit
                     </Button>
                   </td>
                 </tr>
@@ -191,8 +199,7 @@ export function UsersManager({
               <Select
                 value={role}
                 onValueChange={(value) => setRole(value as "admin" | "user")}
-                disabled={loading}
-              >
+                disabled={loading}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -208,8 +215,7 @@ export function UsersManager({
                 <Select
                   value={isActive ? "true" : "false"}
                   onValueChange={(value) => setIsActive(value === "true")}
-                  disabled={loading || editing.id === currentUserId}
-                >
+                  disabled={loading || editing.id === currentUserId}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -235,11 +241,18 @@ export function UsersManager({
             </div>
             {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading ? "Saving..." : editing ? "Save changes" : "Create user"}
+                {loading
+                  ? "Saving..."
+                  : editing
+                    ? "Save changes"
+                    : "Create user"}
               </Button>
             </div>
           </form>

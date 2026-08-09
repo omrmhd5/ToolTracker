@@ -256,27 +256,27 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        title="View"
                         onClick={() => openView(tool)}>
                         <Eye className="h-4 w-4" />
-                        View
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        title="Edit"
                         onClick={() => openEdit(tool)}>
                         <Pencil className="h-4 w-4" />
-                        Edit
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
+                        title="Delete"
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(tool);
                         }}>
                         <Trash2 className="h-4 w-4" />
-                        Delete
                       </Button>
                     </div>
                   </td>

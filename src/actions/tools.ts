@@ -239,21 +239,29 @@ export async function deleteTool(localId: string): Promise<ActionResult> {
     return { success: false, error: "Tool not found" };
   }
 
-  const [anyCheckout] = await db
+  const [openCheckout] = await db
     .select({ id: checkoutLogs.id })
     .from(checkoutLogs)
-    .where(eq(checkoutLogs.toolLocalId, localId))
+    .where(
+      and(
+        eq(checkoutLogs.toolLocalId, localId),
+        isNull(checkoutLogs.checkedInAt),
+      ),
+    )
     .limit(1);
 
-  if (anyCheckout) {
+  if (openCheckout || existing.status === "OUT") {
     return {
       success: false,
       error:
-        "Cannot delete tool with checkout history. Check in and keep the record, or contact an admin.",
+        "Cannot delete a tool that is currently checked out. Check it in first.",
     };
   }
 
-  await db.delete(tools).where(eq(tools.localId, localId));
+  await db.transaction(async (tx) => {
+    await tx.delete(checkoutLogs).where(eq(checkoutLogs.toolLocalId, localId));
+    await tx.delete(tools).where(eq(tools.localId, localId));
+  });
 
   revalidatePath("/admin/tools");
 

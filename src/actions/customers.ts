@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, customers } from "@/db/schema";
@@ -123,20 +123,26 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
     return { success: false, error: "Customer not found" };
   }
 
-  const [anyCheckout] = await db
+  const [openCheckout] = await db
     .select({ id: checkoutLogs.id })
     .from(checkoutLogs)
-    .where(eq(checkoutLogs.customerId, id))
+    .where(
+      and(eq(checkoutLogs.customerId, id), isNull(checkoutLogs.checkedInAt)),
+    )
     .limit(1);
 
-  if (anyCheckout) {
+  if (openCheckout) {
     return {
       success: false,
-      error: "Cannot delete customer with checkout history",
+      error:
+        "Cannot delete a customer with a tool currently checked out. Check in the tool first.",
     };
   }
 
-  await db.delete(customers).where(eq(customers.id, id));
+  await db.transaction(async (tx) => {
+    await tx.delete(checkoutLogs).where(eq(checkoutLogs.customerId, id));
+    await tx.delete(customers).where(eq(customers.id, id));
+  });
 
   revalidatePath("/admin/customers");
 

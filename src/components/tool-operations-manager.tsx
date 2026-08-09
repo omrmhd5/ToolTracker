@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { ArrowLeftRight, ArrowRightLeft } from "lucide-react";
+import { ArrowLeftRight, ArrowRightLeft, StickyNote } from "lucide-react";
 import {
   checkInTool,
   checkOutTool,
   type ToolOperationRow,
 } from "@/actions/checkout";
 import { CustomerPicker } from "@/components/customer-picker";
+import { CheckoutNotesDisplay } from "@/components/checkout-notes-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,20 +31,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate, formatDateTime, isOverdue } from "@/lib/utils";
 
-type CustomerOption = {
-  id: string;
-  employeeId: string;
-  name: string;
-  specialization: string;
-};
-
 type ToolOperationsManagerProps = {
   tools: ToolOperationRow[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
-  customers: CustomerOption[];
 };
 
 const BASE_PATH = "/operations";
@@ -54,7 +47,6 @@ export function ToolOperationsManager({
   page,
   pageSize,
   totalPages,
-  customers,
 }: ToolOperationsManagerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -66,6 +58,9 @@ export function ToolOperationsManager({
     null,
   );
   const [checkinTarget, setCheckinTarget] = useState<ToolOperationRow | null>(
+    null,
+  );
+  const [viewingNotes, setViewingNotes] = useState<ToolOperationRow | null>(
     null,
   );
   const [customerId, setCustomerId] = useState("");
@@ -234,7 +229,12 @@ export function ToolOperationsManager({
                   <th className="px-4 py-3 text-left font-medium">
                     Location/sub
                   </th>
-                  <th className="px-4 py-3 text-left font-medium">Inventory</th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    Checked out at
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    Expected return
+                  </th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3 text-right font-medium">Action</th>
                 </tr>
@@ -257,7 +257,21 @@ export function ToolOperationsManager({
                         .join(" / ") || "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(tool.inventoryDate)}
+                      {tool.status === "OUT" && tool.checkedOutAt
+                        ? formatDateTime(tool.checkedOutAt)
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {tool.status === "OUT" && tool.expectedReturnAt ? (
+                        <div className="inline-flex items-center gap-2">
+                          {formatDate(tool.expectedReturnAt)}
+                          {isOverdue(tool.expectedReturnAt) ? (
+                            <Badge variant="destructive">Overdue</Badge>
+                          ) : null}
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Badge
@@ -266,23 +280,34 @@ export function ToolOperationsManager({
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {tool.status === "IN" ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openCheckout(tool)}>
-                          <ArrowRightLeft className="h-4 w-4" />
-                          Check out
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openCheckin(tool)}>
-                          <ArrowLeftRight className="h-4 w-4" />
-                          Check in
-                        </Button>
-                      )}
+                      <div className="flex justify-end gap-1">
+                        {tool.notes?.trim() ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="View note"
+                            onClick={() => setViewingNotes(tool)}>
+                            <StickyNote className="h-4 w-4" />
+                          </Button>
+                        ) : null}
+                        {tool.status === "IN" ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Check out"
+                            onClick={() => openCheckout(tool)}>
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Check in"
+                            onClick={() => openCheckin(tool)}>
+                            <ArrowLeftRight className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -346,7 +371,6 @@ export function ToolOperationsManager({
 
               <CustomerPicker
                 key={checkoutTarget.localId}
-                customers={customers}
                 value={customerId}
                 onChange={setCustomerId}
               />
@@ -426,7 +450,7 @@ export function ToolOperationsManager({
                     <p className="mt-1 text-muted-foreground">
                       Checked out: {formatDateTime(checkinTarget.checkedOutAt)}
                     </p>
-                    <p className="mt-1 text-muted-foreground">
+                    <div className="mt-1 text-muted-foreground">
                       Expected return:{" "}
                       {formatDate(checkinTarget.expectedReturnAt)}
                       {isOverdue(checkinTarget.expectedReturnAt) ? (
@@ -434,7 +458,7 @@ export function ToolOperationsManager({
                           Overdue
                         </Badge>
                       ) : null}
-                    </p>
+                    </div>
                   </>
                 ) : (
                   <p className="mt-1 text-muted-foreground">
@@ -442,6 +466,10 @@ export function ToolOperationsManager({
                   </p>
                 )}
               </div>
+
+              {checkinTarget.notes?.trim() ? (
+                <CheckoutNotesDisplay notes={checkinTarget.notes} />
+              ) : null}
 
               <div className="space-y-2">
                 <Label htmlFor="checkinNotes">Notes (optional)</Label>
@@ -474,12 +502,25 @@ export function ToolOperationsManager({
         </DialogContent>
       </Dialog>
 
-      {customers.length === 0 ? (
-        <p className="mt-4 text-sm text-destructive">
-          No customers in the system. An admin must add customers before
-          checkout.
-        </p>
-      ) : null}
+      <Dialog open={!!viewingNotes} onOpenChange={() => setViewingNotes(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Notes</DialogTitle>
+            <DialogDescription>
+              {viewingNotes?.localId} — {viewingNotes?.serialNumber}
+            </DialogDescription>
+          </DialogHeader>
+          {viewingNotes?.status === "IN" ? (
+            <p className="text-xs text-muted-foreground">From last checkout</p>
+          ) : null}
+          <CheckoutNotesDisplay notes={viewingNotes?.notes} />
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setViewingNotes(null)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
