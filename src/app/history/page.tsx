@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 type SearchParams = Promise<{
   q?: string;
@@ -20,8 +21,10 @@ type SearchParams = Promise<{
 
 async function HistoryContent({
   searchParams,
+  isAdmin,
 }: {
   searchParams: SearchParams;
+  isAdmin: boolean;
 }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
@@ -34,14 +37,17 @@ async function HistoryContent({
     page,
   });
 
-  return <HistoryManager {...data} />;
+  return <HistoryManager {...data} isAdmin={isAdmin} />;
 }
 
-export default function HistoryPage({
+export default async function HistoryPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  const session = await auth();
+  const isAdmin = session?.user?.role === "admin";
+
   return (
     <AppShell
       currentPath="/history"
@@ -61,7 +67,7 @@ export default function HistoryPage({
                 Loading history...
               </p>
             }>
-            <HistoryContent searchParams={searchParams} />
+            <HistoryContent searchParams={searchParams} isAdmin={isAdmin} />
           </Suspense>
         </CardContent>
       </Card>

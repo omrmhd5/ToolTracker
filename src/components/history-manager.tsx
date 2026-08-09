@@ -2,9 +2,20 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { StickyNote } from "lucide-react";
+import { StickyNote, Trash2 } from "lucide-react";
 import type { CheckoutHistoryRow } from "@/actions/history";
+import { deleteAllCheckoutHistory, deleteCheckoutLog } from "@/actions/history";
 import { CheckoutNotesDisplay } from "@/components/checkout-notes-display";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,18 +37,26 @@ export function HistoryManager({
   page,
   pageSize,
   totalPages,
+  isAdmin,
 }: {
   logs: CheckoutHistoryRow[];
   total: number;
   page: number;
   pageSize: number;
   totalPages: number;
+  isAdmin: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewingNotes, setViewingNotes] = useState<CheckoutHistoryRow | null>(
     null,
   );
+  const [deleteTarget, setDeleteTarget] = useState<CheckoutHistoryRow | null>(
+    null,
+  );
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const toolQuery = searchParams.get("q") ?? "";
   const customerQuery = searchParams.get("customer") ?? "";
@@ -67,6 +86,40 @@ export function HistoryManager({
 
     const query = params.toString();
     router.push(query ? `${BASE_PATH}?${query}` : BASE_PATH);
+  }
+
+  async function handleDeleteRecord() {
+    if (!deleteTarget) return;
+
+    setLoading(true);
+    const result = await deleteCheckoutLog(deleteTarget.id);
+    setLoading(false);
+
+    if (!result.success) {
+      setError(result.error);
+      setDeleteTarget(null);
+      return;
+    }
+
+    setDeleteTarget(null);
+    setError(null);
+    router.refresh();
+  }
+
+  async function handleDeleteAll() {
+    setLoading(true);
+    const result = await deleteAllCheckoutHistory();
+    setLoading(false);
+
+    if (!result.success) {
+      setError(result.error);
+      setDeleteAllOpen(false);
+      return;
+    }
+
+    setDeleteAllOpen(false);
+    setError(null);
+    router.refresh();
   }
 
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -118,7 +171,7 @@ export function HistoryManager({
           <Label htmlFor="toDate">To</Label>
           <Input id="toDate" name="to" type="date" defaultValue={toDate} />
         </div>
-        <div className="flex items-end gap-2 md:col-span-2 lg:col-span-4">
+        <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-4">
           <Button type="submit" variant="secondary">
             Apply filters
           </Button>
@@ -128,8 +181,24 @@ export function HistoryManager({
             onClick={() => router.push(BASE_PATH)}>
             Clear
           </Button>
+          {isAdmin && total > 0 ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setError(null);
+                setDeleteAllOpen(true);
+              }}>
+              <Trash2 className="h-4 w-4" />
+              Delete all
+            </Button>
+          ) : null}
         </div>
       </form>
+
+      {error && !deleteTarget && !deleteAllOpen ? (
+        <p className="mb-4 text-sm text-destructive">{error}</p>
+      ) : null}
 
       {logs.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -151,7 +220,7 @@ export function HistoryManager({
                     Checked in
                   </th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Notes</th>
+                  <th className="px-4 py-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -198,18 +267,33 @@ export function HistoryManager({
                           <Badge variant="success">Returned</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        {log.notes?.trim() ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            title="View note"
-                            onClick={() => setViewingNotes(log)}>
-                            <StickyNote className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {log.notes?.trim() ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="View note"
+                              onClick={() => setViewingNotes(log)}>
+                              <StickyNote className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                          {isAdmin ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Delete record"
+                              onClick={() => {
+                                setError(null);
+                                setDeleteTarget(log);
+                              }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                          {!log.notes?.trim() && !isAdmin ? (
+                            <span className="text-muted-foreground">—</span>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -261,6 +345,55 @@ export function HistoryManager({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete history record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the checkout record for{" "}
+              {deleteTarget?.toolLocalId} ({deleteTarget?.serialNumber}).
+              {!deleteTarget?.checkedInAt
+                ? " The tool will be marked as checked in."
+                : null}{" "}
+              This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && deleteTarget ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRecord} disabled={loading}>
+              {loading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete all history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the entire checkout history. Any
+              tools currently checked out will be marked as checked in. This
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {error && deleteAllOpen ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAll} disabled={loading}>
+              {loading ? "Deleting..." : "Delete all"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

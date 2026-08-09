@@ -2,9 +2,11 @@
 
 import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools, users } from "@/db/schema";
-import { requireAuth } from "@/lib/auth-utils";
+import { requireAdmin, requireAuth } from "@/lib/auth-utils";
+import type { ActionResult } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 const checkedInUser = alias(users, "checked_in_user");
@@ -118,3 +120,67 @@ export async function getCheckoutHistory(filters?: {
 export type CheckoutHistoryRow = Awaited<
   ReturnType<typeof getCheckoutHistory>
 >["logs"][number];
+
+export async function deleteCheckoutLog(id: string): Promise<ActionResult> {
+  await requireAdmin();
+
+  const [log] = await db
+    .select({
+      id: checkoutLogs.id,
+      toolLocalId: checkoutLogs.toolLocalId,
+      checkedInAt: checkoutLogs.checkedInAt,
+    })
+    .from(checkoutLogs)
+    .where(eq(checkoutLogs.id, id))
+    .limit(1);
+
+  if (!log) {
+    return { success: false, error: "History record not found" };
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(checkoutLogs).where(eq(checkoutLogs.id, id));
+
+    if (!log.checkedInAt) {
+      await tx
+        .update(tools)
+        .set({
+          status: "IN",
+          assignedqty: 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(tools.localId, log.toolLocalId));
+    }
+  });
+
+  revalidatePath("/history");
+  revalidatePath("/operations");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/tools");
+
+  return { success: true };
+}
+
+export async function deleteAllCheckoutHistory(): Promise<ActionResult> {
+  await requireAdmin();
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(tools)
+      .set({
+        status: "IN",
+        assignedqty: 0,
+        updatedAt: new Date(),
+      })
+      .where(eq(tools.status, "OUT"));
+
+    await tx.delete(checkoutLogs);
+  });
+
+  revalidatePath("/history");
+  revalidatePath("/operations");
+  revalidatePath("/dashboard");
+  revalidatePath("/admin/tools");
+
+  return { success: true };
+}
