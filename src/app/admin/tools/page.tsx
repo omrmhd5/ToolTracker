@@ -1,7 +1,45 @@
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { getTools } from "@/actions/tools";
 import { AppShell } from "@/components/app-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToolsManager } from "@/components/tools-manager";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
-export default function AdminToolsPage() {
+type SearchParams = Promise<{ status?: string; q?: string }>;
+
+async function ToolsContent({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
+  const status =
+    params.status === "IN" || params.status === "OUT"
+      ? params.status
+      : ("ALL" as const);
+
+  const tools = await getTools({
+    status,
+    q: params.q,
+  });
+
+  return <ToolsManager tools={tools} />;
+}
+
+export default async function AdminToolsPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== "admin") {
+    redirect("/dashboard");
+  }
+
   return (
     <AppShell
       currentPath="/admin/tools"
@@ -10,11 +48,17 @@ export default function AdminToolsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Tools</CardTitle>
+          <CardDescription>
+            One row per physical tool. Search any field or filter by status.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Coming in Increment 3.
-          </p>
+          <Suspense
+            fallback={
+              <p className="text-sm text-muted-foreground">Loading tools...</p>
+            }>
+            <ToolsContent searchParams={searchParams} />
+          </Suspense>
         </CardContent>
       </Card>
     </AppShell>

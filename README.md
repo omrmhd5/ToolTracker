@@ -70,7 +70,12 @@ npm run db:studio
 - Seed script for first admin (`npm run db:seed`)
 - Admin user management at `/admin/users`
 
-Upcoming increments: admin CRUD (customers/tools), checkout flows, search, dashboard, polish.
+**Increment 3 (Master data)** — complete
+
+- Admin customer CRUD at `/admin/customers` (employee ID, name, specialization)
+- Admin tools CRUD at `/admin/tools` (all inventory fields, filters by status/location)
+
+Upcoming increments: checkout flows, search, dashboard, polish.
 
 ## Scripts
 
