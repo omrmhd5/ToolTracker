@@ -9,8 +9,8 @@ services:
     runtime: node
     region: frankfurt
     plan: free
-    buildCommand: npm ci && npm run db:migrate:prod && npm run db:seed && npm run build
-    startCommand: npm start
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
     healthCheckPath: /login
     envVars:
       - key: DATABASE_URL
