@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate, formatDateTime, isOverdue } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ToolOperationsManagerProps = {
   tools: ToolOperationRow[];
@@ -127,9 +128,11 @@ export function ToolOperationsManager({
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success(`Tool ${checkoutTarget.localId} checked out`);
     closeModals();
     router.refresh();
   }
@@ -150,9 +153,11 @@ export function ToolOperationsManager({
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success(`Tool ${checkinTarget.localId} checked in`);
     closeModals();
     router.refresh();
   }

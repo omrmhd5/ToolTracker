@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 type CustomerRow = {
   id: string;
@@ -38,6 +40,7 @@ type CustomerRow = {
 };
 
 export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CustomerRow | null>(null);
@@ -76,11 +79,14 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success(editing ? "Customer updated" : "Customer created");
     setOpen(false);
     setEditing(null);
+    router.refresh();
   }
 
   async function handleDelete() {
@@ -92,12 +98,15 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       setDeleteTarget(null);
       return;
     }
 
+    toast.success("Customer deleted");
     setDeleteTarget(null);
     setError(null);
+    router.refresh();
   }
 
   return (

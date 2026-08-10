@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDate } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ToolRow = {
   localId: string;
@@ -123,8 +124,11 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
+
+    toast.success(editing ? "Tool updated" : "Tool created");
 
     setOpen(false);
     setEditing(null);
@@ -140,9 +144,12 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       setDeleteTarget(null);
       return;
     }
+
+    toast.success("Tool deleted");
 
     setDeleteTarget(null);
     setError(null);

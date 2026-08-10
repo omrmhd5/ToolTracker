@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDate, formatDateTime, isOverdue } from "@/lib/utils";
+import { toast } from "sonner";
 
 const BASE_PATH = "/history";
 
@@ -97,9 +98,12 @@ export function HistoryManager({
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       setDeleteTarget(null);
       return;
     }
+
+    toast.success("History record deleted");
 
     setDeleteTarget(null);
     setError(null);
@@ -113,9 +117,12 @@ export function HistoryManager({
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       setDeleteAllOpen(false);
       return;
     }
+
+    toast.success("All history deleted");
 
     setDeleteAllOpen(false);
     setError(null);

@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import { OverdueReminder } from "@/components/overdue-reminder";
 
 export async function AppShell({
   children,
@@ -23,6 +24,7 @@ export async function AppShell({
             ) : null}
           </div>
         </header>
+        <OverdueReminder />
         <main className="flex-1 p-8">{children}</main>
       </div>
     </div>

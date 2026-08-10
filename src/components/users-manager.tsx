@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { createUser, updateUser } from "@/actions/users";
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 type UserRow = {
   id: string;
@@ -39,6 +41,7 @@ export function UsersManager({
   users: UserRow[];
   currentUserId: string;
 }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [role, setRole] = useState<"admin" | "user">("user");
@@ -92,11 +95,14 @@ export function UsersManager({
 
     if (!result.success) {
       setError(result.error);
+      toast.error(result.error);
       return;
     }
 
+    toast.success(editing ? "User updated" : "User created");
     setOpen(false);
     setEditing(null);
+    router.refresh();
   }
 
   return (
