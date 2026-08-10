@@ -10,7 +10,7 @@ services:
     region: frankfurt
     plan: free
     buildCommand: npm ci && npm run build
-    startCommand: npm run start:prod
+    startCommand: npm start
     healthCheckPath: /login
     envVars:
       - key: DATABASE_URL
