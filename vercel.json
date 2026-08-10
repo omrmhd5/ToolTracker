@@ -1,0 +1,18 @@
+{
+  "services": {
+    "tooltracker": {
+      "root": ".",
+      "framework": "nextjs",
+      "buildCommand": "npm ci && npm run db:migrate:prod && npm run db:seed && npm run build"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "tooltracker"
+      }
+    }
+  ]
+}
