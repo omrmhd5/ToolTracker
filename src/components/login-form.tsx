@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Package } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -53,8 +53,8 @@ export function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Package className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center">
+            <AppLogo size={56} />
           </div>
           <CardTitle>Tool Tracker</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>

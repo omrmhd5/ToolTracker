@@ -6,12 +6,12 @@ import {
   History,
   LayoutDashboard,
   LogOut,
-  Package,
   Settings,
   UserCheck,
   Users,
   Wrench,
 } from "lucide-react";
+import { AppLogo } from "@/components/app-logo";
 import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -75,7 +75,7 @@ export function SidebarNav({
   return (
     <div className={cn("flex h-full min-h-0 flex-col bg-card", className)}>
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4 sm:h-16 sm:px-6">
-        <Package className="h-6 w-6 shrink-0 text-primary" />
+        <AppLogo size={32} />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">Tool Tracker</p>
           <p className="truncate text-xs text-muted-foreground">
