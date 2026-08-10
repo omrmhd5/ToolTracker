@@ -213,21 +213,34 @@ export function HistoryManager({
         </p>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border">
-            <table className="w-full text-sm">
+          <p className="mb-2 text-xs text-muted-foreground sm:hidden">
+            Swipe horizontally to see all columns
+          </p>
+          <div className="-mx-4 overflow-x-auto overscroll-x-contain rounded-lg border touch-pan-x sm:mx-0 [webkit-overflow-scrolling:touch]">
+            <table className="w-full min-w-4xl text-sm">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Tool</th>
-                  <th className="px-4 py-3 text-left font-medium">Customer</th>
-                  <th className="px-4 py-3 text-left font-medium">
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    Tool
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    Customer
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Checked out
                   </th>
-                  <th className="px-4 py-3 text-left font-medium">Expected</th>
-                  <th className="px-4 py-3 text-left font-medium">
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    Expected
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Checked in
                   </th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                    Status
+                  </th>
+                  <th className="whitespace-nowrap px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -237,23 +250,23 @@ export function HistoryManager({
 
                   return (
                     <tr key={log.id} className="border-b last:border-0">
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <p className="font-medium">{log.toolLocalId}</p>
-                        <p className="text-muted-foreground">
+                        <p className="whitespace-normal text-muted-foreground">
                           {log.serialNumber} · {log.partNumber}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         {log.customerEmployeeId} — {log.customerName}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         <p>{formatDateTime(log.checkedOutAt)}</p>
                         <p className="text-xs">by {log.checkedOutByName}</p>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         {formatDate(log.expectedReturnAt)}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         {log.checkedInAt ? (
                           <>
                             <p>{formatDateTime(log.checkedInAt)}</p>
@@ -265,7 +278,7 @@ export function HistoryManager({
                           "—"
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         {open ? (
                           <Badge variant={overdue ? "destructive" : "warning"}>
                             {overdue ? "Overdue" : "Out"}
@@ -274,7 +287,7 @@ export function HistoryManager({
                           <Badge variant="success">Returned</Badge>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="whitespace-nowrap px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           {log.notes?.trim() ? (
                             <Button

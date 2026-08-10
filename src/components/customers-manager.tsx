@@ -146,7 +146,7 @@ export function CustomersManager({
     <>
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <form
-          className="flex flex-1 gap-2"
+          className="flex w-full flex-col gap-2 sm:flex-row sm:items-end lg:flex-1"
           onSubmit={(event) => {
             event.preventDefault();
             const formData = new FormData(event.currentTarget);

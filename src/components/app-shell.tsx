@@ -1,4 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar";
+import { auth } from "@/lib/auth";
+import { AppShellLayout } from "@/components/app-shell-layout";
 import { OverdueReminder } from "@/components/overdue-reminder";
 
 export async function AppShell({
@@ -12,21 +13,24 @@ export async function AppShell({
   title: string;
   description?: string;
 }) {
+  const session = await auth();
+  const user = session?.user
+    ? {
+        name: session.user.name ?? "User",
+        email: session.user.email ?? "",
+        role: session.user.role ?? "user",
+      }
+    : null;
+
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar currentPath={currentPath} />
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-16 items-center border-b bg-card px-8">
-          <div>
-            <h1 className="text-lg font-semibold">{title}</h1>
-            {description ? (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            ) : null}
-          </div>
-        </header>
-        <OverdueReminder />
-        <main className="flex-1 p-8">{children}</main>
-      </div>
-    </div>
+    <AppShellLayout
+      currentPath={currentPath}
+      title={title}
+      description={description}
+      user={user}
+      isAdmin={session?.user?.role === "admin"}>
+      <OverdueReminder />
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+    </AppShellLayout>
   );
 }

@@ -177,7 +177,7 @@ export function ToolsManager({
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
           <form
-            className="flex flex-1 gap-2"
+            className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-end"
             onSubmit={(event) => {
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
@@ -204,7 +204,7 @@ export function ToolsManager({
             <Select
               value={statusFilter}
               onValueChange={(value) => applyFilters(value, searchQuery, 1)}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

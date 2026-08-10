@@ -83,7 +83,7 @@ export default async function DashboardPage() {
                   {overdue.map((item) => (
                     <div
                       key={item.logId}
-                      className="flex items-start justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm">
+                      className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-medium">
                           {item.toolLocalId} — {item.serialNumber}

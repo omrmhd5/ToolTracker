@@ -15,7 +15,7 @@ export async function OverdueReminder() {
   return (
     <div
       role="status"
-      className="border-b border-destructive/20 bg-destructive/10 px-8 py-3">
+      className="border-b border-destructive/20 bg-destructive/10 px-4 py-3 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />

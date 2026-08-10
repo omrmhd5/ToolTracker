@@ -143,14 +143,20 @@ export function CustomerPicker({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSearch} className="flex gap-2">
+          <form
+            onSubmit={handleSearch}
+            className="flex flex-col gap-2 sm:flex-row">
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Search customers..."
-              className="flex-1"
+              className="min-w-0 flex-1"
             />
-            <Button type="submit" variant="secondary" disabled={loading}>
+            <Button
+              type="submit"
+              variant="secondary"
+              disabled={loading}
+              className="shrink-0">
               Search
             </Button>
           </form>
