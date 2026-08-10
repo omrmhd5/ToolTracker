@@ -43,6 +43,22 @@ export function isOverdue(expectedReturnAt: string | Date | null | undefined) {
   return expected < today;
 }
 
+export function daysUntilDue(
+  expectedReturnAt: string | Date | null | undefined,
+) {
+  if (!expectedReturnAt) return null;
+  const expected =
+    typeof expectedReturnAt === "string"
+      ? new Date(expectedReturnAt)
+      : expectedReturnAt;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  expected.setHours(0, 0, 0, 0);
+  return Math.round(
+    (expected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
+}
+
 const CHECK_IN_NOTE_MARKER = "\nCheck-in: ";
 
 export function parseCheckoutNotes(notes: string | null | undefined) {

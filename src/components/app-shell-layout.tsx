@@ -40,8 +40,8 @@ export function AppShellLayout({
   }, [mobileNavOpen]);
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden h-screen w-64 shrink-0 border-r lg:block">
+    <div className="flex h-screen overflow-hidden">
+      <aside className="hidden h-full w-64 shrink-0 border-r lg:block">
         <SidebarNav
           currentPath={currentPath}
           user={user}
@@ -79,7 +79,7 @@ export function AppShellLayout({
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex min-h-14 shrink-0 items-center gap-3 border-b bg-card px-4 py-3 sm:min-h-16 sm:px-6 lg:px-8">
           <Button
             type="button"
@@ -101,7 +101,9 @@ export function AppShellLayout({
             ) : null}
           </div>
         </header>
-        <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

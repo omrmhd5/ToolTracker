@@ -72,7 +72,7 @@ export function SidebarNav({
   }
 
   return (
-    <div className={cn("flex h-full flex-col bg-card", className)}>
+    <div className={cn("flex h-full min-h-0 flex-col bg-card", className)}>
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4 sm:h-16 sm:px-6">
         <Package className="h-6 w-6 shrink-0 text-primary" />
         <div className="min-w-0">
@@ -83,7 +83,7 @@ export function SidebarNav({
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
         <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Operations
         </p>
@@ -100,7 +100,7 @@ export function SidebarNav({
         ) : null}
       </nav>
 
-      <div className="shrink-0 space-y-3 border-t p-4">
+      <div className="mt-auto shrink-0 space-y-3 border-t bg-card p-4">
         {user ? (
           <div className="min-w-0 px-1">
             <p className="truncate text-sm font-medium">{user.name}</p>
