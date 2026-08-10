@@ -6,6 +6,7 @@ import {
   LogOut,
   Package,
   Settings,
+  UserCheck,
   Users,
   Wrench,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/operations", label: "Check In / Out", icon: ArrowRightLeft },
+  { href: "/tools-by-customer", label: "Tools by Customer", icon: UserCheck },
   { href: "/history", label: "History", icon: History },
 ];
 
