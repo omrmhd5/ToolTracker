@@ -290,7 +290,7 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="View note"
+                            aria-label="View note"
                             onClick={() => setViewingNotes(tool)}>
                             <StickyNote className="h-4 w-4" />
                           </Button>
@@ -299,7 +299,7 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Check out"
+                            aria-label="Check out tool"
                             onClick={() => openCheckout(tool)}>
                             <ArrowRightLeft className="h-4 w-4" />
                           </Button>
@@ -307,7 +307,7 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Check in"
+                            aria-label="Check in tool"
                             onClick={() => openCheckin(tool)}>
                             <ArrowLeftRight className="h-4 w-4" />
                           </Button>

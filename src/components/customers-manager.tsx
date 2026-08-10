@@ -214,14 +214,14 @@ export function CustomersManager({
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="Edit"
+                        aria-label="Edit customer"
                         onClick={() => openEdit(customer)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="Delete"
+                        aria-label="Delete customer"
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(customer);

@@ -59,11 +59,12 @@ export function SidebarNav({
         key={item.href}
         href={item.href}
         onClick={onNavigate}
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none",
           active
-            ? "bg-primary text-primary-foreground"
-            : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            ? "bg-primary text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            : "ui-nav-link text-muted-foreground",
         )}>
         <Icon className="h-4 w-4 shrink-0" />
         {item.label}
@@ -83,7 +84,9 @@ export function SidebarNav({
         </div>
       </div>
 
-      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
+      <nav
+        aria-label="Main navigation"
+        className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
         <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Operations
         </p>

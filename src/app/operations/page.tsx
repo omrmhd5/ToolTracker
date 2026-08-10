@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import { getToolsForOperations } from "@/actions/checkout";
 import { AppShell } from "@/components/app-shell";
 import { ToolOperationsManager } from "@/components/tool-operations-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 type SearchParams = Promise<{
@@ -45,17 +45,13 @@ export default function OperationsPage({
       description="Check tools in and out of inventory">
       <Card>
         <CardHeader>
-          <CardTitle>Check In / Out</CardTitle>
           <CardDescription>
             Browse tools in sequence. Search any field, filter by status, and
             check tools in or out.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <p className="text-sm text-muted-foreground">Loading tools...</p>
-            }>
+          <Suspense fallback={<PageLoading label="Loading tools" />}>
             <OperationsContent searchParams={searchParams} />
           </Suspense>
         </CardContent>

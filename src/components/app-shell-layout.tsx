@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ type AppShellLayoutProps = {
   children: React.ReactNode;
 };
 
+const DRAWER_ANIMATION_MS = 240;
+
 export function AppShellLayout({
   currentPath,
   title,
@@ -26,21 +28,48 @@ export function AppShellLayout({
   isAdmin,
   children,
 }: AppShellLayoutProps) {
+  const [mobileNavMounted, setMobileNavMounted] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  useEffect(() => {
+  const openMobileNav = useCallback(() => {
+    setMobileNavMounted(true);
+    requestAnimationFrame(() => setMobileNavOpen(true));
+  }, []);
+
+  const closeMobileNav = useCallback(() => {
     setMobileNavOpen(false);
-  }, [currentPath]);
+    window.setTimeout(() => setMobileNavMounted(false), DRAWER_ANIMATION_MS);
+  }, []);
 
   useEffect(() => {
-    document.body.style.overflow = mobileNavOpen ? "hidden" : "";
+    closeMobileNav();
+  }, [currentPath, closeMobileNav]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileNavMounted ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [mobileNavOpen]);
+  }, [mobileNavMounted]);
+
+  useEffect(() => {
+    if (!mobileNavMounted) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && mobileNavOpen) {
+        closeMobileNav();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileNavMounted, mobileNavOpen, closeMobileNav]);
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <a href="#main-content" className="skip-link">
+        Skip to content
+      </a>
       <aside className="hidden h-full w-64 shrink-0 border-r lg:block">
         <SidebarNav
           currentPath={currentPath}
@@ -50,20 +79,26 @@ export function AppShellLayout({
         />
       </aside>
 
-      {mobileNavOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+      {mobileNavMounted ? (
+        <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
           <button
             type="button"
             aria-label="Close navigation"
-            className="absolute inset-0 bg-black/50"
-            onClick={() => setMobileNavOpen(false)}
+            data-state={mobileNavOpen ? "open" : "closed"}
+            className="ui-drawer-backdrop absolute inset-0 bg-black/50"
+            onClick={closeMobileNav}
           />
-          <aside className="relative flex h-full w-[min(100%,18rem)] max-w-xs shadow-xl">
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            data-state={mobileNavOpen ? "open" : "closed"}
+            className="ui-drawer-panel relative flex h-full w-[min(100%,18rem)] max-w-xs shadow-xl">
             <SidebarNav
               currentPath={currentPath}
               user={user}
               isAdmin={isAdmin}
-              onNavigate={() => setMobileNavOpen(false)}
+              onNavigate={closeMobileNav}
               className="h-full w-full border-r"
             />
             <Button
@@ -71,7 +106,7 @@ export function AppShellLayout({
               variant="ghost"
               size="icon"
               className="absolute right-2 top-3"
-              onClick={() => setMobileNavOpen(false)}
+              onClick={closeMobileNav}
               aria-label="Close menu">
               <X className="h-5 w-5" />
             </Button>
@@ -86,7 +121,7 @@ export function AppShellLayout({
             variant="ghost"
             size="icon"
             className="shrink-0 lg:hidden"
-            onClick={() => setMobileNavOpen(true)}
+            onClick={openMobileNav}
             aria-label="Open menu">
             <Menu className="h-5 w-5" />
           </Button>

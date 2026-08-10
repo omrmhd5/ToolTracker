@@ -193,7 +193,7 @@ export function ToolsByCustomerManager({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  title="View note"
+                                  aria-label="View note"
                                   onClick={() =>
                                     setViewingNotes({
                                       toolLocalId: tool.toolLocalId,

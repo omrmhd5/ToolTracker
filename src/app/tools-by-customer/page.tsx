@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import { getCustomersWithCheckedOutTools } from "@/actions/customer-checkouts";
 import { AppShell } from "@/components/app-shell";
 import { ToolsByCustomerManager } from "@/components/tools-by-customer-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 
 type SearchParams = Promise<{
@@ -43,18 +43,12 @@ export default function ToolsByCustomerPage({
       description="See which tools each customer currently has checked out">
       <Card>
         <CardHeader>
-          <CardTitle>Tools by customer</CardTitle>
           <CardDescription>
             Browse customers and view their currently checked out tools.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <p className="text-sm text-muted-foreground">
-                Loading customers...
-              </p>
-            }>
+          <Suspense fallback={<PageLoading label="Loading customers" />}>
             <ToolsByCustomerContent searchParams={searchParams} />
           </Suspense>
         </CardContent>

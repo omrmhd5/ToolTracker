@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -82,7 +83,7 @@ export function LoginForm() {
                 disabled={loading}
               />
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            <FormError>{error}</FormError>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>

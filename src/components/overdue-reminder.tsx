@@ -14,16 +14,19 @@ export async function OverdueReminder() {
 
   return (
     <div
-      role="status"
+      role="alert"
+      aria-live="polite"
       className="border-b border-destructive/20 bg-destructive/10 px-4 py-3 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
           <div className="space-y-1">
-            <p className="text-sm font-medium text-destructive">
+            <p
+              id="overdue-reminder-heading"
+              className="text-sm font-medium text-destructive">
               {count} {count === 1 ? "tool is" : "tools are"} overdue for return
             </p>
-            <ul className="text-sm text-muted-foreground">
+            <ul className="text-sm text-destructive/80">
               {items.map((item) => (
                 <li key={item.logId}>
                   {item.toolLocalId} ({item.serialNumber}) — {item.customerName}
@@ -38,7 +41,7 @@ export async function OverdueReminder() {
         </div>
         <Link
           href="/operations?status=OUT"
-          className="shrink-0 text-sm font-medium text-destructive underline-offset-4 hover:underline">
+          className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-destructive underline-offset-4 hover:underline">
           View checked-out tools
         </Link>
       </div>

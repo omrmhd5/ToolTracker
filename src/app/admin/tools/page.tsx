@@ -3,12 +3,12 @@ import { Suspense } from "react";
 import { getTools } from "@/actions/tools";
 import { AppShell } from "@/components/app-shell";
 import { ToolsManager } from "@/components/tools-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 
@@ -49,16 +49,12 @@ export default async function AdminToolsPage({
       description="Manage tool inventory">
       <Card>
         <CardHeader>
-          <CardTitle>Tools</CardTitle>
           <CardDescription>
             One row per physical tool. Search any field or filter by status.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <p className="text-sm text-muted-foreground">Loading tools...</p>
-            }>
+          <Suspense fallback={<PageLoading label="Loading tools" />}>
             <ToolsContent searchParams={searchParams} />
           </Suspense>
         </CardContent>

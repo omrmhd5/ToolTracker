@@ -280,21 +280,21 @@ export function ToolsManager({
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="View"
+                        aria-label="View tool details"
                         onClick={() => openView(tool)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="Edit"
+                        aria-label="Edit tool"
                         onClick={() => openEdit(tool)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        title="Delete"
+                        aria-label="Delete tool"
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(tool);

@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FormError } from "@/components/ui/form-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDate, formatDateTime, isOverdue } from "@/lib/utils";
@@ -204,7 +205,7 @@ export function HistoryManager({
       </form>
 
       {error && !deleteTarget && !deleteAllOpen ? (
-        <p className="mb-4 text-sm text-destructive">{error}</p>
+        <FormError className="mb-4">{error}</FormError>
       ) : null}
 
       {logs.length === 0 ? (
@@ -217,28 +218,44 @@ export function HistoryManager({
             Swipe horizontally to see all columns
           </p>
           <div className="-mx-4 overflow-x-auto overscroll-x-contain rounded-lg border touch-pan-x sm:mx-0 [webkit-overflow-scrolling:touch]">
-            <table className="w-full min-w-4xl text-sm">
+            <table
+              className="w-full min-w-[56rem] text-sm"
+              aria-label="Checkout history">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Tool
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Customer
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Checked out
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Expected
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Checked in
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-left font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-left font-medium">
                     Status
                   </th>
-                  <th className="whitespace-nowrap px-4 py-3 text-right font-medium">
+                  <th
+                    scope="col"
+                    className="whitespace-nowrap px-4 py-3 text-right font-medium">
                     Actions
                   </th>
                 </tr>
@@ -293,7 +310,7 @@ export function HistoryManager({
                             <Button
                               variant="ghost"
                               size="icon"
-                              title="View note"
+                              aria-label="View note"
                               onClick={() => setViewingNotes(log)}>
                               <StickyNote className="h-4 w-4" />
                             </Button>
@@ -302,7 +319,7 @@ export function HistoryManager({
                             <Button
                               variant="ghost"
                               size="icon"
-                              title="Delete record"
+                              aria-label="Delete record"
                               onClick={() => {
                                 setError(null);
                                 setDeleteTarget(log);
@@ -381,9 +398,7 @@ export function HistoryManager({
               This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {error && deleteTarget ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : null}
+          {error && deleteTarget ? <FormError>{error}</FormError> : null}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteRecord} disabled={loading}>
@@ -403,9 +418,7 @@ export function HistoryManager({
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {error && deleteAllOpen ? (
-            <p className="text-sm text-destructive">{error}</p>
-          ) : null}
+          {error && deleteAllOpen ? <FormError>{error}</FormError> : null}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll} disabled={loading}>

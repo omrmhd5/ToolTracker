@@ -2,12 +2,12 @@ import { Suspense } from "react";
 import { getCheckoutHistory } from "@/actions/history";
 import { AppShell } from "@/components/app-shell";
 import { HistoryManager } from "@/components/history-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 
@@ -55,18 +55,12 @@ export default async function HistoryPage({
       description="Audit log of all checkouts and returns">
       <Card>
         <CardHeader>
-          <CardTitle>Checkout history</CardTitle>
           <CardDescription>
             Filter by tool, customer, or checkout date range.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <p className="text-sm text-muted-foreground">
-                Loading history...
-              </p>
-            }>
+          <Suspense fallback={<PageLoading label="Loading history" />}>
             <HistoryContent searchParams={searchParams} isAdmin={isAdmin} />
           </Suspense>
         </CardContent>

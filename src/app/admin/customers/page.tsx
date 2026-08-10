@@ -3,12 +3,12 @@ import { Suspense } from "react";
 import { getCustomers } from "@/actions/customers";
 import { AppShell } from "@/components/app-shell";
 import { CustomersManager } from "@/components/customers-manager";
+import { PageLoading } from "@/components/ui/page-loading";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 
@@ -48,18 +48,12 @@ export default async function AdminCustomersPage({
       description="Manage customer records">
       <Card>
         <CardHeader>
-          <CardTitle>Customers</CardTitle>
           <CardDescription>
             People who receive tools. Employee ID must be unique.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense
-            fallback={
-              <p className="text-sm text-muted-foreground">
-                Loading customers...
-              </p>
-            }>
+          <Suspense fallback={<PageLoading label="Loading customers" />}>
             <CustomersContent searchParams={searchParams} />
           </Suspense>
         </CardContent>

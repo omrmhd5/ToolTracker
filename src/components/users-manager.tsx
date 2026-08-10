@@ -156,7 +156,7 @@ export function UsersManager({
                     <Button
                       variant="ghost"
                       size="icon"
-                      title="Edit"
+                      aria-label="Edit user"
                       onClick={() => openEdit(user)}>
                       <Pencil className="h-4 w-4" />
                     </Button>

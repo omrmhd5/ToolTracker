@@ -27,6 +27,11 @@
 
 :root {
   --radius: 0.625rem;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-press: 160ms;
+  --duration-ui: 200ms;
+  --duration-ui-exit: 150ms;
   --background: oklch(0.985 0.002 247);
   --foreground: oklch(0.2 0.02 255);
   --card: oklch(1 0 0);
@@ -53,4 +58,194 @@
 
 body {
   @apply overflow-x-hidden bg-background text-foreground antialiased;
+}
+
+/* Press feedback — transform + opacity only (GPU-friendly) */
+.ui-pressable {
+  transition:
+    transform var(--duration-press) var(--ease-out),
+    background-color var(--duration-press) ease,
+    color var(--duration-press) ease,
+    border-color var(--duration-press) ease,
+    opacity var(--duration-press) ease;
+}
+
+.ui-pressable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-pressable:active:not(:disabled) {
+    transform: none;
+  }
+
+  .ui-pressable,
+  .ui-overlay[data-state="open"],
+  .ui-overlay[data-state="closed"],
+  .ui-modal-content[data-state="open"],
+  .ui-modal-content[data-state="closed"],
+  .ui-popover-content[data-state="open"],
+  .ui-popover-content[data-state="closed"],
+  .ui-drawer-backdrop[data-state="open"],
+  .ui-drawer-backdrop[data-state="closed"],
+  .ui-drawer-panel[data-state="open"],
+  .ui-drawer-panel[data-state="closed"] {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes ui-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-modal-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-modal-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ui-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes ui-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ui-drawer-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.ui-overlay[data-state="open"] {
+  animation: ui-fade-in var(--duration-ui) var(--ease-out) forwards;
+}
+
+.ui-overlay[data-state="closed"] {
+  animation: ui-fade-out var(--duration-ui-exit) var(--ease-out) forwards;
+}
+
+.ui-modal-content[data-state="open"] {
+  animation: ui-modal-in var(--duration-ui) var(--ease-out) forwards;
+}
+
+.ui-modal-content[data-state="closed"] {
+  animation: ui-modal-out var(--duration-ui-exit) var(--ease-out) forwards;
+}
+
+.ui-popover-content {
+  transform-origin: var(--radix-select-content-transform-origin);
+}
+
+.ui-popover-content[data-state="open"] {
+  animation: ui-popover-in 180ms var(--ease-out) forwards;
+}
+
+.ui-popover-content[data-state="closed"] {
+  animation: ui-popover-out var(--duration-ui-exit) var(--ease-out) forwards;
+}
+
+.ui-drawer-backdrop[data-state="open"] {
+  animation: ui-fade-in var(--duration-ui) var(--ease-out) forwards;
+}
+
+.ui-drawer-backdrop[data-state="closed"] {
+  animation: ui-fade-out var(--duration-ui-exit) var(--ease-out) forwards;
+}
+
+.ui-drawer-panel[data-state="open"] {
+  animation: ui-drawer-in 240ms var(--ease-drawer) forwards;
+}
+
+.ui-drawer-panel[data-state="closed"] {
+  animation: ui-drawer-out var(--duration-ui-exit) var(--ease-out) forwards;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ui-nav-link:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
+}
+
+.ui-nav-link:focus-visible {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px var(--ring);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0.75rem;
+  z-index: 100;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  left: 0.75rem;
 }

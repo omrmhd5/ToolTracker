@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { AlertTriangle, ArrowRight, Clock, History, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -61,7 +59,7 @@ type DashboardStats = {
   utilizationPercent: number;
 };
 
-type PanelId = "overdue" | "dueSoon" | "topCustomers" | "activity";
+type DetailPanel = "overdue" | "dueSoon";
 
 type DashboardViewProps = {
   stats: DashboardStats;
@@ -78,66 +76,6 @@ function formatDaysUntil(days: number | null) {
   return `Due in ${days} days`;
 }
 
-function PanelCard({
-  title,
-  description,
-  count,
-  countLabel,
-  icon: Icon,
-  tone = "default",
-  preview,
-  onOpen,
-}: {
-  title: string;
-  description: string;
-  count: number;
-  countLabel: string;
-  icon: React.ComponentType<{ className?: string }>;
-  tone?: "default" | "destructive" | "warning";
-  preview?: string;
-  onOpen: () => void;
-}) {
-  const toneClasses = {
-    default: "text-foreground",
-    destructive: "text-destructive",
-    warning: "text-amber-600 dark:text-amber-500",
-  };
-
-  return (
-    <Card className="flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg border bg-muted/50 p-2">
-              <Icon className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base">{title}</CardTitle>
-              <CardDescription className="mt-1">{description}</CardDescription>
-            </div>
-          </div>
-          <span className={`text-2xl font-semibold ${toneClasses[tone]}`}>
-            {count}
-          </span>
-        </div>
-      </CardHeader>
-      <CardContent className="mt-auto space-y-3">
-        {preview ? (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {preview}
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">{countLabel}</p>
-        )}
-        <Button variant="outline" className="w-full" onClick={onOpen}>
-          View details
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
 export function DashboardView({
   stats,
   overdue,
@@ -145,7 +83,7 @@ export function DashboardView({
   topCustomers,
   activity,
 }: DashboardViewProps) {
-  const [openPanel, setOpenPanel] = useState<PanelId | null>(null);
+  const [openPanel, setOpenPanel] = useState<DetailPanel | null>(null);
 
   const statCards = [
     { label: "Total tools", value: stats.total },
@@ -170,26 +108,6 @@ export function DashboardView({
     },
   ];
 
-  const overduePreview =
-    overdue.length > 0
-      ? `${overdue[0].toolLocalId} — ${overdue[0].customerName}`
-      : undefined;
-
-  const dueSoonPreview =
-    dueSoon.items.length > 0
-      ? `${dueSoon.items[0].toolLocalId} — ${dueSoon.items[0].customerName}`
-      : undefined;
-
-  const topCustomersPreview =
-    topCustomers.length > 0
-      ? `#1 ${topCustomers[0].employeeId} — ${topCustomers[0].name}`
-      : undefined;
-
-  const activityPreview =
-    activity.length > 0
-      ? `${activity[0].action === "CHECK_IN" ? "Check in" : "Check out"}: ${activity[0].toolLocalId}`
-      : undefined;
-
   return (
     <>
       <div className="space-y-6">
@@ -202,7 +120,12 @@ export function DashboardView({
                 key={card.label}
                 className={
                   isClickable
-                    ? "cursor-pointer transition-colors hover:bg-muted/30"
+                    ? "cursor-pointer transition-colors duration-150 ease-[var(--ease-out)] hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    : undefined
+                }
+                aria-label={
+                  isClickable
+                    ? `${card.label}: ${card.value}. View details`
                     : undefined
                 }
                 onClick={
@@ -226,7 +149,7 @@ export function DashboardView({
                     className={`text-3xl ${
                       card.highlight
                         ? card.highlightWarning
-                          ? "text-amber-600 dark:text-amber-500"
+                          ? "text-amber-600"
                           : "text-destructive"
                         : ""
                     }`}>
@@ -248,50 +171,100 @@ export function DashboardView({
           })}
         </div>
 
-        <div>
-          <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-            Details
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <PanelCard
-              title="Overdue returns"
-              description="Tools past their expected return date"
-              count={stats.overdue}
-              countLabel="No overdue tools right now."
-              icon={AlertTriangle}
-              tone={stats.overdue > 0 ? "destructive" : "default"}
-              preview={overduePreview}
-              onOpen={() => setOpenPanel("overdue")}
-            />
-            <PanelCard
-              title="Due soon"
-              description={`Due within the next ${DUE_SOON_DAYS} days`}
-              count={dueSoon.count}
-              countLabel={`No tools due in the next ${DUE_SOON_DAYS} days.`}
-              icon={Clock}
-              tone={dueSoon.count > 0 ? "warning" : "default"}
-              preview={dueSoonPreview}
-              onOpen={() => setOpenPanel("dueSoon")}
-            />
-            <PanelCard
-              title="Top customers"
-              description="Customers with the most tools out"
-              count={topCustomers.length}
-              countLabel="No tools are currently checked out."
-              icon={Users}
-              preview={topCustomersPreview}
-              onOpen={() => setOpenPanel("topCustomers")}
-            />
-            <PanelCard
-              title="Recent activity"
-              description="Latest checkouts and check-ins"
-              count={activity.length}
-              countLabel="No checkout activity yet."
-              icon={History}
-              preview={activityPreview}
-              onOpen={() => setOpenPanel("activity")}
-            />
-          </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Top customers with tools out</CardTitle>
+              <CardDescription>
+                Customers holding the most checked-out tools
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {topCustomers.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No tools are currently checked out.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {topCustomers.map((customer, index) => (
+                    <div
+                      key={customer.customerId}
+                      className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+                      <p className="min-w-0 font-medium">
+                        <span className="text-muted-foreground">
+                          #{index + 1}
+                        </span>{" "}
+                        {customer.employeeId} — {customer.name}
+                      </p>
+                      <Badge variant="secondary">
+                        {customer.toolsOut}{" "}
+                        {customer.toolsOut === 1 ? "tool" : "tools"}
+                      </Badge>
+                    </div>
+                  ))}
+                  <p className="text-sm text-muted-foreground">
+                    <Link
+                      href="/tools-by-customer"
+                      className="font-medium underline-offset-4 hover:underline">
+                      View all customers with tools out
+                    </Link>
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent activity</CardTitle>
+              <CardDescription>Last 10 checkouts and check-ins</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activity.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No checkout activity yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {activity.map((item) => (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border p-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          variant={
+                            item.action === "CHECK_IN" ? "success" : "warning"
+                          }>
+                          {item.action === "CHECK_IN"
+                            ? "Check in"
+                            : "Check out"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDateTime(item.occurredAt)}
+                        </span>
+                      </div>
+                      <p className="mt-2 font-medium">
+                        {item.toolLocalId} — {item.serialNumber}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {item.customerEmployeeId} — {item.customerName}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        By {item.performedByName}
+                      </p>
+                    </div>
+                  ))}
+                  <p className="text-sm text-muted-foreground">
+                    <Link
+                      href="/history"
+                      className="font-medium underline-offset-4 hover:underline">
+                      View full history
+                    </Link>
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
 
@@ -393,105 +366,11 @@ export function DashboardView({
               Showing {dueSoon.items.length} of {dueSoon.count} due soon.{" "}
               <Link
                 href="/operations?status=OUT"
-                className="font-medium text-amber-700 underline-offset-4 hover:underline dark:text-amber-500">
+                className="font-medium text-amber-700 underline-offset-4 hover:underline">
                 View checked-out tools
               </Link>
             </p>
           ) : null}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={openPanel === "topCustomers"}
-        onOpenChange={(open) => !open && setOpenPanel(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Top customers with tools out</DialogTitle>
-            <DialogDescription>
-              Customers holding the most checked-out tools
-            </DialogDescription>
-          </DialogHeader>
-          {topCustomers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No tools are currently checked out.
-            </p>
-          ) : (
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-              {topCustomers.map((customer, index) => (
-                <div
-                  key={customer.customerId}
-                  className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
-                  <p className="min-w-0 font-medium">
-                    <span className="text-muted-foreground">#{index + 1}</span>{" "}
-                    {customer.employeeId} — {customer.name}
-                  </p>
-                  <Badge variant="secondary">
-                    {customer.toolsOut}{" "}
-                    {customer.toolsOut === 1 ? "tool" : "tools"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            <Link
-              href="/tools-by-customer"
-              className="font-medium underline-offset-4 hover:underline">
-              View all customers with tools out
-            </Link>
-          </p>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={openPanel === "activity"}
-        onOpenChange={(open) => !open && setOpenPanel(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Recent activity</DialogTitle>
-            <DialogDescription>
-              Last 10 checkouts and check-ins
-            </DialogDescription>
-          </DialogHeader>
-          {activity.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No checkout activity yet.
-            </p>
-          ) : (
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-              {activity.map((item) => (
-                <div key={item.id} className="rounded-lg border p-3 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge
-                      variant={
-                        item.action === "CHECK_IN" ? "success" : "warning"
-                      }>
-                      {item.action === "CHECK_IN" ? "Check in" : "Check out"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDateTime(item.occurredAt)}
-                    </span>
-                  </div>
-                  <p className="mt-2 font-medium">
-                    {item.toolLocalId} — {item.serialNumber}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {item.customerEmployeeId} — {item.customerName}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    By {item.performedByName}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground">
-            <Link
-              href="/history"
-              className="font-medium underline-offset-4 hover:underline">
-              View full history
-            </Link>
-          </p>
         </DialogContent>
       </Dialog>
     </>
