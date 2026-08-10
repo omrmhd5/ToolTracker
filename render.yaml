@@ -8,8 +8,8 @@ services:
     name: tooltracker
     runtime: node
     region: frankfurt
-    plan: starter
-    buildCommand: npm ci && npm run db:migrate:prod && npm run build
+    plan: free
+    buildCommand: npm ci && npm run db:migrate:prod && npm run db:seed && npm run build
     startCommand: npm start
     healthCheckPath: /login
     envVars:
@@ -18,8 +18,20 @@ services:
           name: tooltracker-db
           property: connectionString
       - key: AUTH_SECRET
-        generateValue: true
+        value: tooltracker2026
       - key: AUTH_URL
         sync: false
+      - key: SEED_ADMIN_EMAIL
+        value: admin@gmail.com
+      - key: SEED_ADMIN_PASSWORD
+        value: admin123
+      - key: SEED_ADMIN_NAME
+        value: System Admin
+      - key: SEED_USER_EMAIL
+        value: user@gmail.com
+      - key: SEED_USER_PASSWORD
+        value: user123
+      - key: SEED_USER_NAME
+        value: Standard User
       - key: NODE_VERSION
         value: "20"

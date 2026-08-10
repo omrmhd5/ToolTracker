@@ -3,15 +3,14 @@ import { eq } from "drizzle-orm";
 import { db } from "./index";
 import { users } from "./schema";
 
-async function seed() {
-  const email = process.env.SEED_ADMIN_EMAIL;
-  const password = process.env.SEED_ADMIN_PASSWORD;
-  const name = process.env.SEED_ADMIN_NAME;
+type SeedUser = {
+  email: string;
+  password: string;
+  name: string;
+  role: "admin" | "user";
+};
 
-  if (!email || !password || !name) {
-    throw new Error("Missing SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, or SEED_ADMIN_NAME in environment");
-  }
-
+async function seedUser({ email, password, name, role }: SeedUser) {
   const normalizedEmail = email.toLowerCase().trim();
 
   const [existing] = await db
@@ -21,7 +20,7 @@ async function seed() {
     .limit(1);
 
   if (existing) {
-    console.log(`Admin already exists: ${normalizedEmail}`);
+    console.log(`${role} already exists: ${normalizedEmail}`);
     return;
   }
 
@@ -31,11 +30,35 @@ async function seed() {
     email: normalizedEmail,
     passwordHash,
     name,
-    role: "admin",
+    role,
     isActive: true,
   });
 
-  console.log(`Admin created: ${normalizedEmail}`);
+  console.log(`${role} created: ${normalizedEmail}`);
+}
+
+async function seed() {
+  const accounts: SeedUser[] = [
+    {
+      email: process.env.SEED_ADMIN_EMAIL ?? "admin@gmail.com",
+      password: process.env.SEED_ADMIN_PASSWORD ?? "admin123",
+      name: process.env.SEED_ADMIN_NAME ?? "System Admin",
+      role: "admin",
+    },
+    {
+      email: process.env.SEED_USER_EMAIL ?? "user@gmail.com",
+      password: process.env.SEED_USER_PASSWORD ?? "user123",
+      name: process.env.SEED_USER_NAME ?? "Standard User",
+      role: "user",
+    },
+  ];
+
+  for (const account of accounts) {
+    if (!account.email || !account.password || !account.name) {
+      throw new Error(`Missing seed credentials for ${account.role}`);
+    }
+    await seedUser(account);
+  }
 }
 
 seed()
