@@ -38,11 +38,6 @@ async function seedUser({ email, password, name, role }: SeedUser) {
 }
 
 async function seed() {
-  if (!process.env.DATABASE_URL) {
-    console.log("DATABASE_URL not set, skipping seed");
-    return;
-  }
-
   const accounts: SeedUser[] = [
     {
       email: process.env.SEED_ADMIN_EMAIL ?? "admin@gmail.com",
