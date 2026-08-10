@@ -5,7 +5,8 @@ import { db } from "@/db";
 import { checkoutLogs, customers, tools } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
+const TOOLS_PREVIEW_LIMIT = 20;
 
 export async function getCustomersWithCheckedOutTools(filters?: {
   q?: string;
@@ -77,6 +78,24 @@ export async function getCustomersWithCheckedOutTools(filters?: {
 
   const customerIds = customerRows.map((customer) => customer.id);
 
+  const toolCounts = await db
+    .select({
+      customerId: checkoutLogs.customerId,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(checkoutLogs)
+    .where(
+      and(
+        inArray(checkoutLogs.customerId, customerIds),
+        isNull(checkoutLogs.checkedInAt),
+      ),
+    )
+    .groupBy(checkoutLogs.customerId);
+
+  const toolCountByCustomer = new Map(
+    toolCounts.map((row) => [row.customerId, Number(row.count)]),
+  );
+
   const openCheckouts = await db
     .select({
       customerId: checkoutLogs.customerId,
@@ -109,10 +128,17 @@ export async function getCustomersWithCheckedOutTools(filters?: {
     toolsByCustomer.set(checkout.customerId, existing);
   }
 
-  const customersWithTools = customerRows.map((customer) => ({
-    ...customer,
-    tools: toolsByCustomer.get(customer.id) ?? [],
-  }));
+  const customersWithTools = customerRows.map((customer) => {
+    const allTools = toolsByCustomer.get(customer.id) ?? [];
+    const totalToolsOut =
+      toolCountByCustomer.get(customer.id) ?? allTools.length;
+
+    return {
+      ...customer,
+      tools: allTools.slice(0, TOOLS_PREVIEW_LIMIT),
+      totalToolsOut,
+    };
+  });
 
   return {
     customers: customersWithTools,

@@ -2,10 +2,10 @@
 
 import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools, users } from "@/db/schema";
 import { requireAdmin, requireAuth } from "@/lib/auth-utils";
+import { revalidateHistoryData } from "@/lib/revalidate-app";
 import type { ActionResult } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -50,6 +50,69 @@ function buildHistoryWhereClause(filters?: {
   return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
+function needsToolJoinForHistory(filters?: {
+  q?: string;
+  customer?: string;
+  from?: string;
+  to?: string;
+}) {
+  return Boolean(filters?.q?.trim());
+}
+
+function needsCustomerJoinForHistory(filters?: {
+  q?: string;
+  customer?: string;
+  from?: string;
+  to?: string;
+}) {
+  return Boolean(filters?.customer?.trim());
+}
+
+function buildHistoryCountQuery(filters?: {
+  q?: string;
+  customer?: string;
+  from?: string;
+  to?: string;
+}) {
+  const whereClause = buildHistoryWhereClause(filters);
+  const needsTools = needsToolJoinForHistory(filters);
+  const needsCustomers = needsCustomerJoinForHistory(filters);
+
+  if (!needsTools && !needsCustomers) {
+    const countQuery = db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(checkoutLogs);
+
+    return whereClause ? countQuery.where(whereClause) : countQuery;
+  }
+
+  if (needsTools && !needsCustomers) {
+    const countQuery = db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(checkoutLogs)
+      .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId));
+
+    return whereClause ? countQuery.where(whereClause) : countQuery;
+  }
+
+  if (!needsTools && needsCustomers) {
+    const countQuery = db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(checkoutLogs)
+      .innerJoin(customers, eq(checkoutLogs.customerId, customers.id));
+
+    return whereClause ? countQuery.where(whereClause) : countQuery;
+  }
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(checkoutLogs)
+    .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
+    .innerJoin(customers, eq(checkoutLogs.customerId, customers.id));
+
+  return whereClause ? countQuery.where(whereClause) : countQuery;
+}
+
 export async function getCheckoutHistory(filters?: {
   q?: string;
   customer?: string;
@@ -84,15 +147,9 @@ export async function getCheckoutHistory(filters?: {
     .innerJoin(users, eq(checkoutLogs.checkedOutBy, users.id))
     .leftJoin(checkedInUser, eq(checkoutLogs.checkedInBy, checkedInUser.id));
 
-  const countQuery = db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(checkoutLogs)
-    .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
-    .innerJoin(customers, eq(checkoutLogs.customerId, customers.id));
+  const countQuery = buildHistoryCountQuery(filters);
 
-  const [countRow] = whereClause
-    ? await countQuery.where(whereClause)
-    : await countQuery;
+  const [countRow] = await countQuery;
 
   const total = Number(countRow?.count ?? 0);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -153,10 +210,7 @@ export async function deleteCheckoutLog(id: string): Promise<ActionResult> {
     }
   });
 
-  revalidatePath("/history");
-  revalidatePath("/operations");
-  revalidatePath("/dashboard");
-  revalidatePath("/admin/tools");
+  revalidateHistoryData();
 
   return { success: true };
 }
@@ -177,10 +231,7 @@ export async function deleteAllCheckoutHistory(): Promise<ActionResult> {
     await tx.delete(checkoutLogs);
   });
 
-  revalidatePath("/history");
-  revalidatePath("/operations");
-  revalidatePath("/dashboard");
-  revalidatePath("/admin/tools");
+  revalidateHistoryData();
 
   return { success: true };
 }

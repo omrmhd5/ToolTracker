@@ -1,20 +1,84 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { checkoutLogs, customers } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
+import { revalidateCustomerData } from "@/lib/revalidate-app";
 import {
   createCustomerSchema,
   updateCustomerSchema,
 } from "@/lib/validations/customer";
 import type { ActionResult } from "@/lib/utils";
 
-export async function getCustomers() {
+const PAGE_SIZE = 20;
+
+export async function getCustomers(filters?: { q?: string; page?: number }) {
   await requireAdmin();
 
-  return db.select().from(customers).orderBy(customers.name);
+  const page = Math.max(1, filters?.page ?? 1);
+  const offset = (page - 1) * PAGE_SIZE;
+  const conditions = [];
+
+  if (filters?.q?.trim()) {
+    const pattern = `%${filters.q.trim()}%`;
+    const searchCondition = or(
+      ilike(customers.employeeId, pattern),
+      ilike(customers.name, pattern),
+      ilike(customers.specialization, pattern),
+    );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(customers);
+
+  const [countRow] = whereClause
+    ? await countQuery.where(whereClause)
+    : await countQuery;
+
+  const total = Number(countRow?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const rows = whereClause
+    ? await db
+        .select({
+          id: customers.id,
+          employeeId: customers.employeeId,
+          name: customers.name,
+          specialization: customers.specialization,
+          createdAt: customers.createdAt,
+        })
+        .from(customers)
+        .where(whereClause)
+        .orderBy(customers.name)
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    : await db
+        .select({
+          id: customers.id,
+          employeeId: customers.employeeId,
+          name: customers.name,
+          specialization: customers.specialization,
+          createdAt: customers.createdAt,
+        })
+        .from(customers)
+        .orderBy(customers.name)
+        .limit(PAGE_SIZE)
+        .offset(offset);
+
+  return {
+    customers: rows,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages,
+  };
 }
 
 export async function createCustomer(
@@ -55,7 +119,7 @@ export async function createCustomer(
     })
     .returning({ id: customers.id });
 
-  revalidatePath("/admin/customers");
+  revalidateCustomerData();
 
   return { success: true, data: { id: created.id } };
 }
@@ -106,7 +170,7 @@ export async function updateCustomer(input: unknown): Promise<ActionResult> {
     })
     .where(eq(customers.id, id));
 
-  revalidatePath("/admin/customers");
+  revalidateCustomerData();
 
   return { success: true };
 }
@@ -144,7 +208,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
     await tx.delete(customers).where(eq(customers.id, id));
   });
 
-  revalidatePath("/admin/customers");
+  revalidateCustomerData();
 
   return { success: true };
 }

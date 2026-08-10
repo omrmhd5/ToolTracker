@@ -30,7 +30,7 @@ export default async function DashboardPage() {
 
   const [stats, overdue, activity] = await Promise.all([
     getDashboardStats(),
-    getOverdueCheckouts(),
+    getOverdueCheckouts(20),
     getRecentActivity(),
   ]);
 
@@ -99,6 +99,16 @@ export default async function DashboardPage() {
                       <Badge variant="destructive">Overdue</Badge>
                     </div>
                   ))}
+                  {stats.overdue > overdue.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      Showing {overdue.length} of {stats.overdue} overdue tools.{" "}
+                      <Link
+                        href="/operations?status=OUT"
+                        className="font-medium text-destructive underline-offset-4 hover:underline">
+                        View all checked-out tools
+                      </Link>
+                    </p>
+                  ) : null}
                 </div>
               )}
             </CardContent>

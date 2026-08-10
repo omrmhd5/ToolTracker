@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import {
@@ -31,6 +31,8 @@ import { Label } from "@/components/ui/label";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "sonner";
 
+const BASE_PATH = "/admin/customers";
+
 type CustomerRow = {
   id: string;
   employeeId: string;
@@ -39,13 +41,41 @@ type CustomerRow = {
   createdAt: Date;
 };
 
-export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
+export function CustomersManager({
+  customers,
+  total,
+  page,
+  pageSize,
+  totalPages,
+}: {
+  customers: CustomerRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CustomerRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const searchQuery = searchParams.get("q") ?? "";
+
+  function applyFilters(next: { q?: string; page?: number }) {
+    const params = new URLSearchParams();
+
+    const q = next.q ?? searchQuery;
+    const nextPage = next.page ?? 1;
+
+    if (q.trim()) params.set("q", q.trim());
+    if (nextPage > 1) params.set("page", String(nextPage));
+
+    const query = params.toString();
+    router.push(query ? `${BASE_PATH}?${query}` : BASE_PATH);
+  }
 
   function openCreate() {
     setEditing(null);
@@ -109,10 +139,36 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
     router.refresh();
   }
 
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
+
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <Button onClick={openCreate}>
+      <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <form
+          className="flex flex-1 gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const formData = new FormData(event.currentTarget);
+            applyFilters({ q: formData.get("q") as string, page: 1 });
+          }}>
+          <div className="min-w-0 flex-1 space-y-2">
+            <Label htmlFor="searchQuery">Search</Label>
+            <Input
+              id="searchQuery"
+              name="q"
+              defaultValue={searchQuery}
+              placeholder="Employee ID, name, or specialization"
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="secondary"
+            className="mt-auto shrink-0">
+            Search
+          </Button>
+        </form>
+        <Button onClick={openCreate} className="shrink-0">
           <Plus className="h-4 w-4" />
           Add customer
         </Button>
@@ -124,7 +180,7 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
 
       {customers.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No customers yet. Add the first customer.
+          No customers found. Add a customer or adjust your search.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
@@ -180,6 +236,33 @@ export function CustomersManager({ customers }: { customers: CustomerRow[] }) {
           </table>
         </div>
       )}
+
+      {customers.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {rangeStart}–{rangeEnd} of {total} customers
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => applyFilters({ page: page - 1 })}>
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => applyFilters({ page: page + 1 })}>
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

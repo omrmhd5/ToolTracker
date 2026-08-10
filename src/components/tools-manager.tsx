@@ -57,7 +57,19 @@ type ToolRow = {
   custodyExpectedReturn: string | null;
 };
 
-export function ToolsManager({ tools }: { tools: ToolRow[] }) {
+export function ToolsManager({
+  tools,
+  total,
+  page,
+  pageSize,
+  totalPages,
+}: {
+  tools: ToolRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -72,10 +84,11 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
   const statusFilter = searchParams.get("status") ?? "ALL";
   const searchQuery = searchParams.get("q") ?? "";
 
-  function applyFilters(status: string, q: string) {
+  function applyFilters(status: string, q: string, nextPage = 1) {
     const params = new URLSearchParams();
     if (status && status !== "ALL") params.set("status", status);
     if (q.trim()) params.set("q", q.trim());
+    if (nextPage > 1) params.set("page", String(nextPage));
     const query = params.toString();
     router.push(query ? `/admin/tools?${query}` : "/admin/tools");
   }
@@ -156,6 +169,9 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
     router.refresh();
   }
 
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
+
   return (
     <>
       <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -165,7 +181,7 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
             onSubmit={(event) => {
               event.preventDefault();
               const formData = new FormData(event.currentTarget);
-              applyFilters(statusFilter, formData.get("q") as string);
+              applyFilters(statusFilter, formData.get("q") as string, 1);
             }}>
             <div className="min-w-0 flex-1 space-y-2">
               <Label htmlFor="searchQuery">Search</Label>
@@ -187,7 +203,7 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
             <Label>Status</Label>
             <Select
               value={statusFilter}
-              onValueChange={(value) => applyFilters(value, searchQuery)}>
+              onValueChange={(value) => applyFilters(value, searchQuery, 1)}>
               <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
@@ -293,6 +309,33 @@ export function ToolsManager({ tools }: { tools: ToolRow[] }) {
           </table>
         </div>
       )}
+
+      {tools.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {rangeStart}–{rangeEnd} of {total} tools
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => applyFilters(statusFilter, searchQuery, page - 1)}>
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => applyFilters(statusFilter, searchQuery, page + 1)}>
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">

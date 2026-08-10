@@ -22,8 +22,12 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   role: userRoleEnum("role").notNull().default("user"),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 
 export const customers = pgTable(
@@ -33,8 +37,12 @@ export const customers = pgTable(
     employeeId: varchar("employee_id", { length: 100 }).notNull().unique(),
     name: varchar("name", { length: 255 }).notNull(),
     specialization: varchar("specialization", { length: 255 }).notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [index("customers_employee_id_idx").on(table.employeeId)],
 );
@@ -55,14 +63,19 @@ export const tools = pgTable(
     subLocation: varchar("sub_location", { length: 255 }),
     inventoryDate: date("inventory_date"),
     status: toolStatusEnum("status").notNull().default("IN"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
   (table) => [
     index("tools_serial_number_idx").on(table.serialNumber),
     index("tools_part_number_idx").on(table.partNumber),
     index("tools_nsn_idx").on(table.nsn),
     index("tools_status_idx").on(table.status),
+    index("tools_seq_idx").on(table.seq),
   ],
 );
 
@@ -80,7 +93,9 @@ export const checkoutLogs = pgTable(
       .notNull()
       .references(() => users.id),
     checkedInBy: uuid("checked_in_by").references(() => users.id),
-    checkedOutAt: timestamp("checked_out_at", { withTimezone: true }).notNull().defaultNow(),
+    checkedOutAt: timestamp("checked_out_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     expectedReturnAt: date("expected_return_at").notNull(),
     checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
     notes: text("notes"),
@@ -88,6 +103,12 @@ export const checkoutLogs = pgTable(
   (table) => [
     index("checkout_logs_tool_local_id_idx").on(table.toolLocalId),
     index("checkout_logs_checked_in_at_idx").on(table.checkedInAt),
+    index("checkout_logs_checked_out_at_idx").on(table.checkedOutAt),
+    index("checkout_logs_customer_id_idx").on(table.customerId),
+    index("checkout_logs_tool_checked_out_at_idx").on(
+      table.toolLocalId,
+      table.checkedOutAt,
+    ),
   ],
 );
 

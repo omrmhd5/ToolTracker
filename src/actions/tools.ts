@@ -1,29 +1,24 @@
 "use server";
 
 import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, tools } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
+import { revalidateToolData } from "@/lib/revalidate-app";
 import { createToolSchema, updateToolSchema } from "@/lib/validations/tool";
 import type { ActionResult } from "@/lib/utils";
+
+const PAGE_SIZE = 20;
 
 async function getNextToolNumber(): Promise<number> {
   const [row] = await db
     .select({
       maxSeq: sql<number>`coalesce(max(${tools.seq}), 0)`,
-      total: sql<number>`count(*)::int`,
     })
     .from(tools);
 
   const maxSeq = Number(row?.maxSeq ?? 0);
-  const total = Number(row?.total ?? 0);
-
-  if (maxSeq > 0) {
-    return maxSeq + 1;
-  }
-
-  return total + 1;
+  return maxSeq > 0 ? maxSeq + 1 : 1;
 }
 
 export async function peekNextToolNumber() {
@@ -34,9 +29,12 @@ export async function peekNextToolNumber() {
 export async function getTools(filters?: {
   status?: "IN" | "OUT" | "ALL";
   q?: string;
+  page?: number;
 }) {
   await requireAdmin();
 
+  const page = Math.max(1, filters?.page ?? 1);
+  const offset = (page - 1) * PAGE_SIZE;
   const conditions = [];
 
   if (filters?.status && filters.status !== "ALL") {
@@ -45,24 +43,38 @@ export async function getTools(filters?: {
 
   if (filters?.q?.trim()) {
     const term = `%${filters.q.trim()}%`;
-    conditions.push(
-      or(
-        ilike(tools.localId, term),
-        ilike(tools.nsn, term),
-        ilike(tools.partNumber, term),
-        ilike(tools.serialNumber, term),
-        ilike(tools.nomenclature, term),
-        ilike(tools.commonName, term),
-        ilike(tools.location, term),
-        ilike(tools.subLocation, term),
-        sql`cast(${tools.seq} as text) ilike ${term}`,
-        sql`cast(${tools.authqty} as text) ilike ${term}`,
-        sql`cast(${tools.assignedqty} as text) ilike ${term}`,
-        sql`cast(${tools.status} as text) ilike ${term}`,
-        sql`cast(${tools.inventoryDate} as text) ilike ${term}`,
-      ),
+    const searchCondition = or(
+      ilike(tools.localId, term),
+      ilike(tools.nsn, term),
+      ilike(tools.partNumber, term),
+      ilike(tools.serialNumber, term),
+      ilike(tools.nomenclature, term),
+      ilike(tools.commonName, term),
+      ilike(tools.location, term),
+      ilike(tools.subLocation, term),
+      sql`cast(${tools.seq} as text) ilike ${term}`,
+      sql`cast(${tools.authqty} as text) ilike ${term}`,
+      sql`cast(${tools.assignedqty} as text) ilike ${term}`,
+      sql`cast(${tools.status} as text) ilike ${term}`,
+      sql`cast(${tools.inventoryDate} as text) ilike ${term}`,
     );
+    if (searchCondition) {
+      conditions.push(searchCondition);
+    }
   }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(tools);
+
+  const [countRow] = whereClause
+    ? await countQuery.where(whereClause)
+    : await countQuery;
+
+  const total = Number(countRow?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const baseQuery = db
     .select({
@@ -90,11 +102,21 @@ export async function getTools(filters?: {
       ),
     );
 
-  if (conditions.length > 0) {
-    return baseQuery.where(and(...conditions)).orderBy(tools.seq);
-  }
+  const rows = whereClause
+    ? await baseQuery
+        .where(whereClause)
+        .orderBy(tools.seq)
+        .limit(PAGE_SIZE)
+        .offset(offset)
+    : await baseQuery.orderBy(tools.seq).limit(PAGE_SIZE).offset(offset);
 
-  return baseQuery.orderBy(tools.seq);
+  return {
+    tools: rows,
+    total,
+    page,
+    pageSize: PAGE_SIZE,
+    totalPages,
+  };
 }
 
 export async function createTool(
@@ -154,7 +176,7 @@ export async function createTool(
     status: "IN",
   });
 
-  revalidatePath("/admin/tools");
+  revalidateToolData();
 
   return { success: true, data: { localId: data.localId.trim() } };
 }
@@ -222,7 +244,7 @@ export async function updateTool(
     })
     .where(eq(tools.localId, originalLocalId));
 
-  revalidatePath("/admin/tools");
+  revalidateToolData();
 
   return { success: true };
 }
@@ -263,7 +285,7 @@ export async function deleteTool(localId: string): Promise<ActionResult> {
     await tx.delete(tools).where(eq(tools.localId, localId));
   });
 
-  revalidatePath("/admin/tools");
+  revalidateToolData();
 
   return { success: true };
 }

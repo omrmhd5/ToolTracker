@@ -60,10 +60,6 @@ export function CustomerPicker({
   }, [value]);
 
   useEffect(() => {
-    void loadCustomers("", 1);
-  }, [loadCustomers]);
-
-  useEffect(() => {
     if (modalOpen) {
       void loadCustomers(query, page);
     }

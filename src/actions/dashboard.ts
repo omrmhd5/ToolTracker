@@ -1,42 +1,99 @@
 "use server";
 
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools, users } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
 
+const OVERDUE_PREVIEW_LIMIT = 3;
+const DASHBOARD_OVERDUE_LIMIT = 20;
+
+const getCachedDashboardStats = unstable_cache(
+  async () => {
+    const [toolStats] = await db
+      .select({
+        total: sql<number>`count(*)::int`,
+        inStock: sql<number>`count(*) filter (where ${tools.status} = 'IN')::int`,
+        checkedOut: sql<number>`count(*) filter (where ${tools.status} = 'OUT')::int`,
+      })
+      .from(tools);
+
+    const [overdueStats] = await db
+      .select({
+        overdue: sql<number>`count(*)::int`,
+      })
+      .from(checkoutLogs)
+      .where(
+        and(
+          isNull(checkoutLogs.checkedInAt),
+          sql`${checkoutLogs.expectedReturnAt} < current_date`,
+        ),
+      );
+
+    return {
+      total: Number(toolStats?.total ?? 0),
+      inStock: Number(toolStats?.inStock ?? 0),
+      checkedOut: Number(toolStats?.checkedOut ?? 0),
+      overdue: Number(overdueStats?.overdue ?? 0),
+    };
+  },
+  ["dashboard-stats"],
+  { revalidate: 30, tags: ["dashboard-stats"] },
+);
+
+const getCachedOverdueReminder = unstable_cache(
+  async () => {
+    const [countRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(checkoutLogs)
+      .where(
+        and(
+          isNull(checkoutLogs.checkedInAt),
+          sql`${checkoutLogs.expectedReturnAt} < current_date`,
+        ),
+      );
+
+    const items = await db
+      .select({
+        logId: checkoutLogs.id,
+        toolLocalId: tools.localId,
+        serialNumber: tools.serialNumber,
+        customerName: customers.name,
+        expectedReturnAt: checkoutLogs.expectedReturnAt,
+      })
+      .from(checkoutLogs)
+      .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
+      .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
+      .where(
+        and(
+          isNull(checkoutLogs.checkedInAt),
+          sql`${checkoutLogs.expectedReturnAt} < current_date`,
+        ),
+      )
+      .orderBy(checkoutLogs.expectedReturnAt)
+      .limit(OVERDUE_PREVIEW_LIMIT);
+
+    return {
+      count: Number(countRow?.count ?? 0),
+      items,
+    };
+  },
+  ["overdue-reminder"],
+  { revalidate: 30, tags: ["overdue-reminder"] },
+);
+
 export async function getDashboardStats() {
   await requireAuth();
-
-  const [toolStats] = await db
-    .select({
-      total: sql<number>`count(*)::int`,
-      inStock: sql<number>`count(*) filter (where ${tools.status} = 'IN')::int`,
-      checkedOut: sql<number>`count(*) filter (where ${tools.status} = 'OUT')::int`,
-    })
-    .from(tools);
-
-  const [overdueStats] = await db
-    .select({
-      overdue: sql<number>`count(*)::int`,
-    })
-    .from(checkoutLogs)
-    .where(
-      and(
-        isNull(checkoutLogs.checkedInAt),
-        sql`${checkoutLogs.expectedReturnAt} < current_date`,
-      ),
-    );
-
-  return {
-    total: Number(toolStats?.total ?? 0),
-    inStock: Number(toolStats?.inStock ?? 0),
-    checkedOut: Number(toolStats?.checkedOut ?? 0),
-    overdue: Number(overdueStats?.overdue ?? 0),
-  };
+  return getCachedDashboardStats();
 }
 
-export async function getOverdueCheckouts() {
+export async function getOverdueReminder() {
+  await requireAuth();
+  return getCachedOverdueReminder();
+}
+
+export async function getOverdueCheckouts(limit = DASHBOARD_OVERDUE_LIMIT) {
   await requireAuth();
 
   return db
@@ -60,7 +117,8 @@ export async function getOverdueCheckouts() {
         sql`${checkoutLogs.expectedReturnAt} < current_date`,
       ),
     )
-    .orderBy(checkoutLogs.expectedReturnAt);
+    .orderBy(checkoutLogs.expectedReturnAt)
+    .limit(limit);
 }
 
 export type ActivityItem = {

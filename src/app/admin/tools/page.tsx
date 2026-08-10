@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 
-type SearchParams = Promise<{ status?: string; q?: string }>;
+type SearchParams = Promise<{ status?: string; q?: string; page?: string }>;
 
 async function ToolsContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -20,13 +20,15 @@ async function ToolsContent({ searchParams }: { searchParams: SearchParams }) {
     params.status === "IN" || params.status === "OUT"
       ? params.status
       : ("ALL" as const);
+  const page = Math.max(1, Number(params.page) || 1);
 
-  const tools = await getTools({
+  const data = await getTools({
     status,
     q: params.q,
+    page,
   });
 
-  return <ToolsManager tools={tools} />;
+  return <ToolsManager {...data} />;
 }
 
 export default async function AdminToolsPage({

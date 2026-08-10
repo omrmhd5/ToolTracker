@@ -8,6 +8,13 @@
       "when": 1785933079353,
       "tag": "0000_volatile_mad_thinker",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785933079354,
+      "tag": "0001_performance_indexes",
+      "breakpoints": true
     }
   ]
 }

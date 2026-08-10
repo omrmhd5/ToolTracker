@@ -110,10 +110,10 @@ export function ToolsByCustomerManager({
                   </div>
                   <Badge
                     variant={
-                      customer.tools.length > 0 ? "warning" : "secondary"
+                      customer.totalToolsOut > 0 ? "warning" : "secondary"
                     }>
-                    {customer.tools.length}{" "}
-                    {customer.tools.length === 1 ? "tool" : "tools"} out
+                    {customer.totalToolsOut}{" "}
+                    {customer.totalToolsOut === 1 ? "tool" : "tools"} out
                   </Badge>
                 </div>
 
@@ -212,6 +212,12 @@ export function ToolsByCustomerManager({
                       })}
                     </tbody>
                   </table>
+                  {customer.totalToolsOut > customer.tools.length ? (
+                    <p className="px-4 py-2 text-sm text-muted-foreground">
+                      Showing {customer.tools.length} of{" "}
+                      {customer.totalToolsOut} checked-out tools.
+                    </p>
+                  ) : null}
                 </div>
               </div>
             ))}

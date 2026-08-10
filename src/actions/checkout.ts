@@ -1,10 +1,10 @@
 "use server";
 
 import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
+import { revalidateCheckoutData } from "@/lib/revalidate-app";
 import { checkInSchema, checkOutSchema } from "@/lib/validations/checkout";
 import type { ActionResult } from "@/lib/utils";
 
@@ -108,17 +108,21 @@ export async function getToolsForOperations(filters?: {
     )
     .leftJoin(customers, eq(checkoutLogs.customerId, customers.id));
 
-  const countQuery = db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(tools)
-    .leftJoin(
-      checkoutLogs,
-      and(
-        eq(checkoutLogs.toolLocalId, tools.localId),
-        isNull(checkoutLogs.checkedInAt),
-      ),
-    )
-    .leftJoin(customers, eq(checkoutLogs.customerId, customers.id));
+  const countQuery = filters?.q?.trim()
+    ? db
+        .select({
+          count: sql<number>`count(distinct ${tools.localId})::int`,
+        })
+        .from(tools)
+        .leftJoin(
+          checkoutLogs,
+          and(
+            eq(checkoutLogs.toolLocalId, tools.localId),
+            isNull(checkoutLogs.checkedInAt),
+          ),
+        )
+        .leftJoin(customers, eq(checkoutLogs.customerId, customers.id))
+    : db.select({ count: sql<number>`count(*)::int` }).from(tools);
 
   const [countRow] = whereClause
     ? await countQuery.where(whereClause)
@@ -290,10 +294,7 @@ export async function checkOutTool(
       return log;
     });
 
-    revalidatePath("/operations");
-    revalidatePath("/dashboard");
-    revalidatePath("/history");
-    revalidatePath("/admin/tools");
+    revalidateCheckoutData();
 
     return { success: true, data: { checkoutLogId: result.id } };
   } catch (error) {
@@ -374,10 +375,7 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
         .where(eq(tools.localId, data.toolLocalId));
     });
 
-    revalidatePath("/operations");
-    revalidatePath("/dashboard");
-    revalidatePath("/history");
-    revalidatePath("/admin/tools");
+    revalidateCheckoutData();
 
     return { success: true };
   } catch (error) {

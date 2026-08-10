@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import { getOverdueCheckouts } from "@/actions/dashboard";
+import { getOverdueReminder } from "@/actions/dashboard";
 import { formatDate } from "@/lib/utils";
 
 export async function OverdueReminder() {
-  const overdue = await getOverdueCheckouts();
+  const { count, items } = await getOverdueReminder();
 
-  if (overdue.length === 0) {
+  if (count === 0) {
     return null;
   }
 
-  const preview = overdue.slice(0, 3);
-  const remaining = overdue.length - preview.length;
+  const remaining = count - items.length;
 
   return (
     <div
@@ -22,11 +21,10 @@ export async function OverdueReminder() {
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-destructive">
-              {overdue.length} {overdue.length === 1 ? "tool is" : "tools are"}{" "}
-              overdue for return
+              {count} {count === 1 ? "tool is" : "tools are"} overdue for return
             </p>
             <ul className="text-sm text-muted-foreground">
-              {preview.map((item) => (
+              {items.map((item) => (
                 <li key={item.logId}>
                   {item.toolLocalId} ({item.serialNumber}) — {item.customerName}
                   , due {formatDate(item.expectedReturnAt)}
