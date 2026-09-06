@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { getCustomersWithCheckedOutTools } from "@/actions/customer-checkouts";
-import { AppShell } from "@/components/app-shell";
 import { ToolsByCustomerManager } from "@/components/tools-by-customer-manager";
 import { PageLoading } from "@/components/ui/page-loading";
 import {
@@ -37,22 +36,17 @@ export default function ToolsByCustomerPage({
   searchParams: SearchParams;
 }) {
   return (
-    <AppShell
-      currentPath="/tools-by-customer"
-      title="Tools by Customer"
-      description="See which tools each customer currently has checked out">
-      <Card>
-        <CardHeader>
-          <CardDescription>
-            Browse customers and view their currently checked out tools.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PageLoading label="Loading customers" />}>
-            <ToolsByCustomerContent searchParams={searchParams} />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </AppShell>
+    <Card>
+      <CardHeader>
+        <CardDescription>
+          Browse customers and view their currently checked out tools.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<PageLoading label="Loading customers" />}>
+          <ToolsByCustomerContent searchParams={searchParams} />
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 }

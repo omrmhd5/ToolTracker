@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getTools } from "@/actions/tools";
-import { AppShell } from "@/components/app-shell";
 import { ToolsManager } from "@/components/tools-manager";
 import { PageLoading } from "@/components/ui/page-loading";
 import {
@@ -43,22 +42,17 @@ export default async function AdminToolsPage({
   }
 
   return (
-    <AppShell
-      currentPath="/admin/tools"
-      title="Tools"
-      description="Manage tool inventory">
-      <Card>
-        <CardHeader>
-          <CardDescription>
-            One row per physical tool. Search any field or filter by status.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PageLoading label="Loading tools" />}>
-            <ToolsContent searchParams={searchParams} />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </AppShell>
+    <Card>
+      <CardHeader>
+        <CardDescription>
+          One row per physical tool. Search any field or filter by status.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<PageLoading label="Loading tools" />}>
+          <ToolsContent searchParams={searchParams} />
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 }

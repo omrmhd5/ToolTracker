@@ -16,10 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Tool Tracker",
   description: "Tool inventory and custody tracking system",
-  icons: {
-    icon: "/favicon.ico",
-    apple: "/Logo.png",
-  },
 };
 
 export const viewport: Viewport = {

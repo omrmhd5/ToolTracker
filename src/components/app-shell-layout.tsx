@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Button } from "@/components/ui/button";
+import { getRouteMeta } from "@/lib/app-routes";
 
 type AppShellLayoutProps = {
-  currentPath: string;
-  title: string;
-  description?: string;
   user: {
     name: string;
     email: string;
@@ -21,13 +20,12 @@ type AppShellLayoutProps = {
 const DRAWER_ANIMATION_MS = 240;
 
 export function AppShellLayout({
-  currentPath,
-  title,
-  description,
   user,
   isAdmin,
   children,
 }: AppShellLayoutProps) {
+  const pathname = usePathname();
+  const { title, description } = getRouteMeta(pathname);
   const [mobileNavMounted, setMobileNavMounted] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -43,7 +41,7 @@ export function AppShellLayout({
 
   useEffect(() => {
     closeMobileNav();
-  }, [currentPath, closeMobileNav]);
+  }, [pathname, closeMobileNav]);
 
   useEffect(() => {
     document.body.style.overflow = mobileNavMounted ? "hidden" : "";
@@ -72,7 +70,7 @@ export function AppShellLayout({
       </a>
       <aside className="hidden h-full w-64 shrink-0 border-r lg:block">
         <SidebarNav
-          currentPath={currentPath}
+          currentPath={pathname}
           user={user}
           isAdmin={isAdmin}
           className="h-full"
@@ -95,7 +93,7 @@ export function AppShellLayout({
             data-state={mobileNavOpen ? "open" : "closed"}
             className="ui-drawer-panel relative flex h-full w-[min(100%,18rem)] max-w-xs shadow-xl">
             <SidebarNav
-              currentPath={currentPath}
+              currentPath={pathname}
               user={user}
               isAdmin={isAdmin}
               onNavigate={closeMobileNav}

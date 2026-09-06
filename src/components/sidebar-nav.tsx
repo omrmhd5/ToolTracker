@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import {
   ArrowRightLeft,
   History,
@@ -36,6 +36,19 @@ type SidebarUser = {
   role: string;
 };
 
+function NavPendingIndicator() {
+  const { pending } = useLinkStatus();
+
+  if (!pending) return null;
+
+  return (
+    <span
+      className="ml-auto h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-current"
+      aria-hidden="true"
+    />
+  );
+}
+
 export function SidebarNav({
   currentPath,
   user,
@@ -68,6 +81,7 @@ export function SidebarNav({
         )}>
         <Icon className="h-4 w-4 shrink-0" />
         {item.label}
+        <NavPendingIndicator />
       </Link>
     );
   }

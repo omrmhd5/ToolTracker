@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCustomers } from "@/actions/customers";
-import { AppShell } from "@/components/app-shell";
 import { CustomersManager } from "@/components/customers-manager";
 import { PageLoading } from "@/components/ui/page-loading";
 import {
@@ -42,22 +41,17 @@ export default async function AdminCustomersPage({
   }
 
   return (
-    <AppShell
-      currentPath="/admin/customers"
-      title="Customers"
-      description="Manage customer records">
-      <Card>
-        <CardHeader>
-          <CardDescription>
-            People who receive tools. Employee ID must be unique.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PageLoading label="Loading customers" />}>
-            <CustomersContent searchParams={searchParams} />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </AppShell>
+    <Card>
+      <CardHeader>
+        <CardDescription>
+          People who receive tools. Employee ID must be unique.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<PageLoading label="Loading customers" />}>
+          <CustomersContent searchParams={searchParams} />
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 }

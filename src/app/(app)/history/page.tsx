@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { getCheckoutHistory } from "@/actions/history";
-import { AppShell } from "@/components/app-shell";
 import { HistoryManager } from "@/components/history-manager";
 import { PageLoading } from "@/components/ui/page-loading";
 import {
@@ -49,22 +48,17 @@ export default async function HistoryPage({
   const isAdmin = session?.user?.role === "admin";
 
   return (
-    <AppShell
-      currentPath="/history"
-      title="History"
-      description="Audit log of all checkouts and returns">
-      <Card>
-        <CardHeader>
-          <CardDescription>
-            Filter by tool, customer, or checkout date range.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PageLoading label="Loading history" />}>
-            <HistoryContent searchParams={searchParams} isAdmin={isAdmin} />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </AppShell>
+    <Card>
+      <CardHeader>
+        <CardDescription>
+          Filter by tool, customer, or checkout date range.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<PageLoading label="Loading history" />}>
+          <HistoryContent searchParams={searchParams} isAdmin={isAdmin} />
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 }

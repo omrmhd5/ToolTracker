@@ -193,32 +193,39 @@ export async function getTopCustomersWithToolsOut() {
   return getCachedTopCustomers();
 }
 
+const getCachedOverdueCheckouts = unstable_cache(
+  async (limit: number) => {
+    return db
+      .select({
+        logId: checkoutLogs.id,
+        toolLocalId: tools.localId,
+        serialNumber: tools.serialNumber,
+        partNumber: tools.partNumber,
+        commonName: tools.commonName,
+        customerEmployeeId: customers.employeeId,
+        customerName: customers.name,
+        expectedReturnAt: checkoutLogs.expectedReturnAt,
+        checkedOutAt: checkoutLogs.checkedOutAt,
+      })
+      .from(checkoutLogs)
+      .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
+      .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
+      .where(
+        and(
+          isNull(checkoutLogs.checkedInAt),
+          sql`${checkoutLogs.expectedReturnAt} < current_date`,
+        ),
+      )
+      .orderBy(checkoutLogs.expectedReturnAt)
+      .limit(limit);
+  },
+  ["dashboard-overdue"],
+  { revalidate: 30, tags: ["dashboard-stats", "overdue-reminder"] },
+);
+
 export async function getOverdueCheckouts(limit = DASHBOARD_OVERDUE_LIMIT) {
   await requireAuth();
-
-  return db
-    .select({
-      logId: checkoutLogs.id,
-      toolLocalId: tools.localId,
-      serialNumber: tools.serialNumber,
-      partNumber: tools.partNumber,
-      commonName: tools.commonName,
-      customerEmployeeId: customers.employeeId,
-      customerName: customers.name,
-      expectedReturnAt: checkoutLogs.expectedReturnAt,
-      checkedOutAt: checkoutLogs.checkedOutAt,
-    })
-    .from(checkoutLogs)
-    .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
-    .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
-    .where(
-      and(
-        isNull(checkoutLogs.checkedInAt),
-        sql`${checkoutLogs.expectedReturnAt} < current_date`,
-      ),
-    )
-    .orderBy(checkoutLogs.expectedReturnAt)
-    .limit(limit);
+  return getCachedOverdueCheckouts(limit);
 }
 
 export type ActivityItem = {
@@ -233,64 +240,51 @@ export type ActivityItem = {
   performedByName: string;
 };
 
-export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
-  await requireAuth();
+const getCachedRecentActivity = unstable_cache(
+  async (limit: number): Promise<ActivityItem[]> => {
+    const [checkoutEvents, checkinEvents] = await Promise.all([
+      db
+        .select({
+          id: checkoutLogs.id,
+          occurredAt: checkoutLogs.checkedOutAt,
+          toolLocalId: tools.localId,
+          serialNumber: tools.serialNumber,
+          partNumber: tools.partNumber,
+          customerEmployeeId: customers.employeeId,
+          customerName: customers.name,
+          performedByName: users.name,
+        })
+        .from(checkoutLogs)
+        .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
+        .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
+        .innerJoin(users, eq(checkoutLogs.checkedOutBy, users.id))
+        .orderBy(desc(checkoutLogs.checkedOutAt))
+        .limit(limit),
+      db
+        .select({
+          id: checkoutLogs.id,
+          occurredAt: checkoutLogs.checkedInAt,
+          toolLocalId: tools.localId,
+          serialNumber: tools.serialNumber,
+          partNumber: tools.partNumber,
+          customerEmployeeId: customers.employeeId,
+          customerName: customers.name,
+          performedByName: users.name,
+        })
+        .from(checkoutLogs)
+        .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
+        .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
+        .innerJoin(users, eq(checkoutLogs.checkedInBy, users.id))
+        .where(sql`${checkoutLogs.checkedInAt} is not null`)
+        .orderBy(desc(checkoutLogs.checkedInAt))
+        .limit(limit),
+    ]);
 
-  const checkoutEvents = await db
-    .select({
-      id: checkoutLogs.id,
-      occurredAt: checkoutLogs.checkedOutAt,
-      toolLocalId: tools.localId,
-      serialNumber: tools.serialNumber,
-      partNumber: tools.partNumber,
-      customerEmployeeId: customers.employeeId,
-      customerName: customers.name,
-      performedByName: users.name,
-    })
-    .from(checkoutLogs)
-    .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
-    .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
-    .innerJoin(users, eq(checkoutLogs.checkedOutBy, users.id))
-    .orderBy(desc(checkoutLogs.checkedOutAt))
-    .limit(limit);
-
-  const checkinEvents = await db
-    .select({
-      id: checkoutLogs.id,
-      occurredAt: checkoutLogs.checkedInAt,
-      toolLocalId: tools.localId,
-      serialNumber: tools.serialNumber,
-      partNumber: tools.partNumber,
-      customerEmployeeId: customers.employeeId,
-      customerName: customers.name,
-      performedByName: users.name,
-    })
-    .from(checkoutLogs)
-    .innerJoin(tools, eq(checkoutLogs.toolLocalId, tools.localId))
-    .innerJoin(customers, eq(checkoutLogs.customerId, customers.id))
-    .innerJoin(users, eq(checkoutLogs.checkedInBy, users.id))
-    .where(sql`${checkoutLogs.checkedInAt} is not null`)
-    .orderBy(desc(checkoutLogs.checkedInAt))
-    .limit(limit);
-
-  const merged: ActivityItem[] = [
-    ...checkoutEvents.map((event) => ({
-      id: `${event.id}-out`,
-      action: "CHECK_OUT" as const,
-      occurredAt: event.occurredAt,
-      toolLocalId: event.toolLocalId,
-      serialNumber: event.serialNumber,
-      partNumber: event.partNumber,
-      customerEmployeeId: event.customerEmployeeId,
-      customerName: event.customerName,
-      performedByName: event.performedByName,
-    })),
-    ...checkinEvents
-      .filter((event) => event.occurredAt)
-      .map((event) => ({
-        id: `${event.id}-in`,
-        action: "CHECK_IN" as const,
-        occurredAt: event.occurredAt!,
+    const merged: ActivityItem[] = [
+      ...checkoutEvents.map((event) => ({
+        id: `${event.id}-out`,
+        action: "CHECK_OUT" as const,
+        occurredAt: event.occurredAt,
         toolLocalId: event.toolLocalId,
         serialNumber: event.serialNumber,
         partNumber: event.partNumber,
@@ -298,9 +292,41 @@ export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
         customerName: event.customerName,
         performedByName: event.performedByName,
       })),
-  ];
+      ...checkinEvents
+        .filter((event) => event.occurredAt)
+        .map((event) => ({
+          id: `${event.id}-in`,
+          action: "CHECK_IN" as const,
+          occurredAt: event.occurredAt!,
+          toolLocalId: event.toolLocalId,
+          serialNumber: event.serialNumber,
+          partNumber: event.partNumber,
+          customerEmployeeId: event.customerEmployeeId,
+          customerName: event.customerName,
+          performedByName: event.performedByName,
+        })),
+    ];
 
-  return merged
-    .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
-    .slice(0, limit);
+    return merged
+      .sort(
+        (a, b) =>
+          new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+      )
+      .slice(0, limit);
+  },
+  ["dashboard-recent-activity"],
+  { revalidate: 30, tags: ["dashboard-stats"] },
+);
+
+export async function getRecentActivity(limit = 10): Promise<ActivityItem[]> {
+  await requireAuth();
+  const items = await getCachedRecentActivity(limit);
+
+  return items.map((item) => ({
+    ...item,
+    occurredAt:
+      item.occurredAt instanceof Date
+        ? item.occurredAt
+        : new Date(item.occurredAt),
+  }));
 }

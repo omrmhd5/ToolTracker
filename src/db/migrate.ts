@@ -9,7 +9,14 @@ async function runMigrations() {
     throw new Error("DATABASE_URL is not set");
   }
 
-  const client = postgres(connectionString, { max: 1 });
+  const needsSsl =
+    process.env.NODE_ENV === "production" ||
+    /neon\.tech|sslmode=require|render\.com/i.test(connectionString);
+
+  const client = postgres(connectionString, {
+    max: 1,
+    ...(needsSsl ? { ssl: "require" as const } : {}),
+  });
   const db = drizzle(client);
 
   await migrate(db, { migrationsFolder: "drizzle/migrations" });

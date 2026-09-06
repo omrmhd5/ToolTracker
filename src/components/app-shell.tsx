@@ -1,18 +1,9 @@
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { AppShellLayout } from "@/components/app-shell-layout";
 import { OverdueReminder } from "@/components/overdue-reminder";
 
-export async function AppShell({
-  children,
-  currentPath,
-  title,
-  description,
-}: {
-  children: React.ReactNode;
-  currentPath: string;
-  title: string;
-  description?: string;
-}) {
+export async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const user = session?.user
     ? {
@@ -23,13 +14,10 @@ export async function AppShell({
     : null;
 
   return (
-    <AppShellLayout
-      currentPath={currentPath}
-      title={title}
-      description={description}
-      user={user}
-      isAdmin={session?.user?.role === "admin"}>
-      <OverdueReminder />
+    <AppShellLayout user={user} isAdmin={session?.user?.role === "admin"}>
+      <Suspense fallback={null}>
+        <OverdueReminder />
+      </Suspense>
       <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8">
         {children}
       </main>

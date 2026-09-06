@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { getToolsForOperations } from "@/actions/checkout";
-import { AppShell } from "@/components/app-shell";
 import { ToolOperationsManager } from "@/components/tool-operations-manager";
 import { PageLoading } from "@/components/ui/page-loading";
 import {
@@ -39,23 +38,18 @@ export default function OperationsPage({
   searchParams: SearchParams;
 }) {
   return (
-    <AppShell
-      currentPath="/operations"
-      title="Check In / Out"
-      description="Check tools in and out of inventory">
-      <Card>
-        <CardHeader>
-          <CardDescription>
-            Browse tools in sequence. Search any field, filter by status, and
-            check tools in or out.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Suspense fallback={<PageLoading label="Loading tools" />}>
-            <OperationsContent searchParams={searchParams} />
-          </Suspense>
-        </CardContent>
-      </Card>
-    </AppShell>
+    <Card>
+      <CardHeader>
+        <CardDescription>
+          Browse tools in sequence. Search any field, filter by status, and
+          check tools in or out.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Suspense fallback={<PageLoading label="Loading tools" />}>
+          <OperationsContent searchParams={searchParams} />
+        </Suspense>
+      </CardContent>
+    </Card>
   );
 }
