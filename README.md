@@ -75,7 +75,7 @@ The app gives operations and admins a single place to run the checkout lifecycle
 
 ## 🎬 Site Demo
 
-**[▶ Watch site walkthrough](./docs/tooltracker-demo.mp4)** (~2 min)
+**[▶ Watch site walkthrough](./docs/tooltracker-demo.mp4)** (~1¼ min)
 
 Login → Arabic dashboard glance → checkout **TT-010** to **EMP-01** → **Tools by Customer** search → dashboard scroll and **Due in 7 days** modal → filter checked-out tools and check in with notes → **Users** → **History**.
 
