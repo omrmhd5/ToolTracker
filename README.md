@@ -15,6 +15,17 @@ Tool inventory and custody tracking for teams that check tools in and out to cus
   - Customers CRUD (employee ID, name, specialization)
   - User management (create/edit accounts, roles, active status)
 
+## View live demo
+
+[**View Live Demo**](https://tooltracker-demo.vercel.app)
+
+| Role  | Email           | Password |
+| ----- | --------------- | -------- |
+| Admin | admin@admin.com | admin123 |
+| User  | user@user.com   | user123  |
+
+First load after idle may take a few seconds while Vercel and Neon wake.
+
 ## Tech stack
 
 | Layer     | Technology                            |
