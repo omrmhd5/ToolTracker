@@ -19,13 +19,18 @@ export function DemoCredentialsCard() {
       <p className="mt-1 text-xs text-muted-foreground">{t("demoHint")}</p>
       <div className="mt-3 space-y-2">
         {ACCOUNTS.map((account) => (
-          <div
-            key={account.role}
-            className="flex flex-col gap-0.5 rounded-md bg-muted/60 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+          <div key={account.role} className="rounded-md bg-muted/60 px-3 py-2">
             <span className="font-medium">{tRoles(account.role)}</span>
-            <span className="select-all font-mono text-xs sm:text-sm">
-              {account.email} / {account.password}
-            </span>
+            <div className="mt-1 space-y-0.5 font-mono text-xs sm:text-sm">
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-muted-foreground">{t("email")}</span>
+                <span className="select-all">{account.email}</span>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <span className="text-muted-foreground">{t("password")}</span>
+                <span className="select-all">{account.password}</span>
+              </div>
+            </div>
           </div>
         ))}
       </div>
