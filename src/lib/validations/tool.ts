@@ -9,11 +9,11 @@ const optionalDate = formString(z.string()).transform((value) =>
 );
 
 const toolFields = {
-  localId: formString(z.string().min(1, "Local ID is required").max(100)),
+  localId: formString(z.string().min(1, "validation.localIdRequired").max(100)),
   nsn: formString(z.string().max(100)),
-  partNumber: formString(z.string().min(1, "Part number is required").max(100)),
+  partNumber: formString(z.string().min(1, "validation.partNumberRequired").max(100)),
   serialNumber: formString(
-    z.string().min(1, "Serial number is required").max(100),
+    z.string().min(1, "validation.serialRequired").max(100),
   ),
   nomenclature: formString(z.string().max(2000)),
   commonName: formString(z.string().max(2000)),

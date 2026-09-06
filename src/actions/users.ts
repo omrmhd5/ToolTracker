@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
+import { tError, zodIssueMessage, getRequestLocale } from "@/lib/i18n";
 import { createUserSchema, updateUserSchema } from "@/lib/validations/user";
 import type { ActionResult } from "@/lib/utils";
 
@@ -28,9 +29,16 @@ export async function getUsers() {
 export async function createUser(input: unknown): Promise<ActionResult<{ id: string }>> {
   await requireAdmin();
 
+  const locale = await getRequestLocale();
   const parsed = createUserSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: zodIssueMessage(
+        locale,
+        parsed.error.issues[0]?.message ?? "errors.invalidInput",
+      ),
+    };
   }
 
   const { email, password, name, role } = parsed.data;
@@ -43,7 +51,7 @@ export async function createUser(input: unknown): Promise<ActionResult<{ id: str
     .limit(1);
 
   if (existing) {
-    return { success: false, error: "A user with this email already exists" };
+    return { success: false, error: await tError("errors.emailTaken") };
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -67,9 +75,16 @@ export async function createUser(input: unknown): Promise<ActionResult<{ id: str
 export async function updateUser(input: unknown): Promise<ActionResult> {
   const session = await requireAdmin();
 
+  const locale = await getRequestLocale();
   const parsed = updateUserSchema.safeParse(input);
   if (!parsed.success) {
-    return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      success: false,
+      error: zodIssueMessage(
+        locale,
+        parsed.error.issues[0]?.message ?? "errors.invalidInput",
+      ),
+    };
   }
 
   const { id, email, name, role, isActive, password } = parsed.data;
@@ -77,7 +92,7 @@ export async function updateUser(input: unknown): Promise<ActionResult> {
 
   const [existing] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   if (!existing) {
-    return { success: false, error: "User not found" };
+    return { success: false, error: await tError("errors.userNotFound") };
   }
 
   const [emailTaken] = await db
@@ -87,15 +102,15 @@ export async function updateUser(input: unknown): Promise<ActionResult> {
     .limit(1);
 
   if (emailTaken && emailTaken.id !== id) {
-    return { success: false, error: "A user with this email already exists" };
+    return { success: false, error: await tError("errors.emailTaken") };
   }
 
   if (id === session.user.id && !isActive) {
-    return { success: false, error: "You cannot deactivate your own account" };
+    return { success: false, error: await tError("errors.cannotDeactivateSelf") };
   }
 
   if (id === session.user.id && role !== "admin") {
-    return { success: false, error: "You cannot remove your own admin role" };
+    return { success: false, error: await tError("errors.cannotRemoveOwnAdmin") };
   }
 
   const updates: {

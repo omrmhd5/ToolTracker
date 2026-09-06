@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { Settings, Users, Wrench } from "lucide-react";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -67,14 +70,8 @@ type DashboardViewProps = {
   dueSoon: { count: number; items: DueSoonItem[] };
   topCustomers: TopCustomer[];
   activity: ActivityItem[];
+  isAdmin?: boolean;
 };
-
-function formatDaysUntil(days: number | null) {
-  if (days === null) return "—";
-  if (days === 0) return "Due today";
-  if (days === 1) return "Due tomorrow";
-  return `Due in ${days} days`;
-}
 
 export function DashboardView({
   stats,
@@ -82,36 +79,49 @@ export function DashboardView({
   dueSoon,
   topCustomers,
   activity,
+  isAdmin = false,
 }: DashboardViewProps) {
+  const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [openPanel, setOpenPanel] = useState<DetailPanel | null>(null);
 
   const statCards = [
-    { label: "Total tools", value: stats.total },
-    { label: "In stock", value: stats.inStock },
+    { label: t("totalTools"), value: stats.total },
+    { label: t("inStock"), value: stats.inStock },
     {
-      label: "Checked out",
+      label: t("checkedOut"),
       value: stats.checkedOut,
-      subtitle: `${stats.utilizationPercent}% utilization`,
+      subtitle: t("utilization", { percent: stats.utilizationPercent }),
     },
     {
-      label: `Due in ${DUE_SOON_DAYS} days`,
+      label: t("dueInDaysCount", { days: DUE_SOON_DAYS }),
       value: stats.dueSoon,
       highlight: stats.dueSoon > 0,
       highlightWarning: true,
       panel: "dueSoon" as const,
     },
     {
-      label: "Overdue",
+      label: t("overdue"),
       value: stats.overdue,
       highlight: stats.overdue > 0,
       panel: "overdue" as const,
     },
   ];
 
+  function formatDaysUntil(days: number | null) {
+    if (days === null) return "—";
+    if (days === 0) return tCommon("dueToday");
+    if (days === 1) return tCommon("dueTomorrow");
+    return tCommon("dueInDaysFmt", { days });
+  }
+
   return (
     <>
-      <div className="space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div id="dashboard-page" className="space-y-6">
+        <div
+          id="dashboard-stats"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {statCards.map((card) => {
             const isClickable = "panel" in card && card.panel;
 
@@ -123,11 +133,7 @@ export function DashboardView({
                     ? "cursor-pointer transition-colors duration-150 ease-[var(--ease-out)] hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     : undefined
                 }
-                aria-label={
-                  isClickable
-                    ? `${card.label}: ${card.value}. View details`
-                    : undefined
-                }
+                aria-label={isClickable ? t("tapDetails") : undefined}
                 onClick={
                   isClickable ? () => setOpenPanel(card.panel!) : undefined
                 }
@@ -162,7 +168,7 @@ export function DashboardView({
                   ) : null}
                   {isClickable ? (
                     <p className="text-xs text-muted-foreground">
-                      Tap to view details
+                      {t("tapDetails")}
                     </p>
                   ) : null}
                 </CardHeader>
@@ -172,17 +178,15 @@ export function DashboardView({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
+          <Card id="dashboard-customers">
             <CardHeader>
-              <CardTitle>Top customers with tools out</CardTitle>
-              <CardDescription>
-                Customers holding the most checked-out tools
-              </CardDescription>
+              <CardTitle>{t("topCustomers")}</CardTitle>
+              <CardDescription>{t("topCustomersHint")}</CardDescription>
             </CardHeader>
             <CardContent>
               {topCustomers.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No tools are currently checked out.
+                  {t("noCheckedOut")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -197,8 +201,7 @@ export function DashboardView({
                         {customer.employeeId} — {customer.name}
                       </p>
                       <Badge variant="secondary">
-                        {customer.toolsOut}{" "}
-                        {customer.toolsOut === 1 ? "tool" : "tools"}
+                        {t("toolCount", { count: customer.toolsOut })}
                       </Badge>
                     </div>
                   ))}
@@ -206,7 +209,7 @@ export function DashboardView({
                     <Link
                       href="/tools-by-customer"
                       className="font-medium underline-offset-4 hover:underline">
-                      View all customers with tools out
+                      {t("viewAllCustomers")}
                     </Link>
                   </p>
                 </div>
@@ -214,15 +217,15 @@ export function DashboardView({
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="dashboard-activity">
             <CardHeader>
-              <CardTitle>Recent activity</CardTitle>
-              <CardDescription>Last 10 checkouts and check-ins</CardDescription>
+              <CardTitle>{t("recentActivity")}</CardTitle>
+              <CardDescription>{t("recentActivityHint")}</CardDescription>
             </CardHeader>
             <CardContent>
               {activity.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No checkout activity yet.
+                  {t("noActivity")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -236,11 +239,11 @@ export function DashboardView({
                             item.action === "CHECK_IN" ? "success" : "warning"
                           }>
                           {item.action === "CHECK_IN"
-                            ? "Check in"
-                            : "Check out"}
+                            ? t("checkIn")
+                            : t("checkOut")}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
-                          {formatDateTime(item.occurredAt)}
+                          {formatDateTime(item.occurredAt, locale)}
                         </span>
                       </div>
                       <p className="mt-2 font-medium">
@@ -250,7 +253,7 @@ export function DashboardView({
                         {item.customerEmployeeId} — {item.customerName}
                       </p>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        By {item.performedByName}
+                        {t("byUser", { name: item.performedByName })}
                       </p>
                     </div>
                   ))}
@@ -258,7 +261,7 @@ export function DashboardView({
                     <Link
                       href="/history"
                       className="font-medium underline-offset-4 hover:underline">
-                      View full history
+                      {t("viewHistory")}
                     </Link>
                   </p>
                 </div>
@@ -266,6 +269,37 @@ export function DashboardView({
             </CardContent>
           </Card>
         </div>
+
+        {isAdmin ? (
+          <Card id="dashboard-admin">
+            <CardHeader>
+              <CardTitle>{t("adminShortcuts")}</CardTitle>
+              <CardDescription>{t("adminShortcutsHint")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" asChild>
+                  <Link href="/admin/tools">
+                    <Wrench className="h-4 w-4" />
+                    {t("manageTools")}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/admin/customers">
+                    <Users className="h-4 w-4" />
+                    {t("manageCustomers")}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/admin/users">
+                    <Settings className="h-4 w-4" />
+                    {t("manageUsers")}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
       <Dialog
@@ -273,15 +307,11 @@ export function DashboardView({
         onOpenChange={(open) => !open && setOpenPanel(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Overdue returns</DialogTitle>
-            <DialogDescription>
-              Checked-out tools past their expected return date
-            </DialogDescription>
+            <DialogTitle>{t("overdueReturns")}</DialogTitle>
+            <DialogDescription>{t("overdueHint")}</DialogDescription>
           </DialogHeader>
           {overdue.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No overdue tools right now.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("noOverdue")}</p>
           ) : (
             <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
               {overdue.map((item) => (
@@ -296,22 +326,25 @@ export function DashboardView({
                       {item.customerEmployeeId} — {item.customerName}
                     </p>
                     <p className="mt-1 text-muted-foreground">
-                      Due {formatDate(item.expectedReturnAt)} · Checked out{" "}
-                      {formatDate(item.checkedOutAt)}
+                      {t("due", { date: formatDate(item.expectedReturnAt, locale) })}{" "}
+                      · {t("checkedOutOn", { date: formatDate(item.checkedOutAt, locale) })}
                     </p>
                   </div>
-                  <Badge variant="destructive">Overdue</Badge>
+                  <Badge variant="destructive">{tCommon("overdue")}</Badge>
                 </div>
               ))}
             </div>
           )}
           {stats.overdue > overdue.length ? (
             <p className="text-sm text-muted-foreground">
-              Showing {overdue.length} of {stats.overdue} overdue tools.{" "}
+              {t("showingOverdue", {
+                shown: overdue.length,
+                total: stats.overdue,
+              })}{" "}
               <Link
                 href="/operations?status=OUT"
                 className="font-medium text-destructive underline-offset-4 hover:underline">
-                View all checked-out tools
+                {t("viewCheckedOut")}
               </Link>
             </p>
           ) : null}
@@ -323,14 +356,14 @@ export function DashboardView({
         onOpenChange={(open) => !open && setOpenPanel(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Due soon</DialogTitle>
+            <DialogTitle>{t("dueSoonTitle")}</DialogTitle>
             <DialogDescription>
-              Open checkouts due within the next {DUE_SOON_DAYS} days
+              {t("dueSoonHint", { days: DUE_SOON_DAYS })}
             </DialogDescription>
           </DialogHeader>
           {dueSoon.items.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No tools due in the next {DUE_SOON_DAYS} days.
+              {t("noDueSoon", { days: DUE_SOON_DAYS })}
             </p>
           ) : (
             <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
@@ -350,11 +383,13 @@ export function DashboardView({
                       </p>
                       <p className="mt-1 text-muted-foreground">
                         {formatDaysUntil(daysLeft)} ·{" "}
-                        {formatDate(item.expectedReturnAt)}
+                        {formatDate(item.expectedReturnAt, locale)}
                       </p>
                     </div>
                     <Badge variant="warning">
-                      {daysLeft === 0 ? "Today" : `${daysLeft}d`}
+                      {daysLeft === 0
+                        ? tCommon("today")
+                        : tCommon("daysShort", { days: daysLeft ?? 0 })}
                     </Badge>
                   </div>
                 );
@@ -363,11 +398,14 @@ export function DashboardView({
           )}
           {dueSoon.count > dueSoon.items.length ? (
             <p className="text-sm text-muted-foreground">
-              Showing {dueSoon.items.length} of {dueSoon.count} due soon.{" "}
+              {t("showingDueSoon", {
+                shown: dueSoon.items.length,
+                total: dueSoon.count,
+              })}{" "}
               <Link
                 href="/operations?status=OUT"
                 className="font-medium text-amber-700 underline-offset-4 hover:underline">
-                View checked-out tools
+                {t("viewCheckedOutTools")}
               </Link>
             </p>
           ) : null}

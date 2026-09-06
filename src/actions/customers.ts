@@ -4,6 +4,7 @@ import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { checkoutLogs, customers } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
+import { tError, tZod } from "@/lib/i18n";
 import { revalidateCustomerData } from "@/lib/revalidate-app";
 import {
   createCustomerSchema,
@@ -90,7 +91,7 @@ export async function createCustomer(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -106,7 +107,7 @@ export async function createCustomer(
   if (existing) {
     return {
       success: false,
-      error: "A customer with this employee ID already exists",
+      error: await tError("errors.employeeIdTaken"),
     };
   }
 
@@ -131,7 +132,7 @@ export async function updateCustomer(input: unknown): Promise<ActionResult> {
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -144,7 +145,7 @@ export async function updateCustomer(input: unknown): Promise<ActionResult> {
     .where(eq(customers.id, id))
     .limit(1);
   if (!existing) {
-    return { success: false, error: "Customer not found" };
+    return { success: false, error: await tError("errors.customerNotFound") };
   }
 
   const [employeeIdTaken] = await db
@@ -156,7 +157,7 @@ export async function updateCustomer(input: unknown): Promise<ActionResult> {
   if (employeeIdTaken && employeeIdTaken.id !== id) {
     return {
       success: false,
-      error: "A customer with this employee ID already exists",
+      error: await tError("errors.employeeIdTaken"),
     };
   }
 
@@ -184,7 +185,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
     .where(eq(customers.id, id))
     .limit(1);
   if (!existing) {
-    return { success: false, error: "Customer not found" };
+    return { success: false, error: await tError("errors.customerNotFound") };
   }
 
   const [openCheckout] = await db
@@ -198,8 +199,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
   if (openCheckout) {
     return {
       success: false,
-      error:
-        "Cannot delete a customer with a tool currently checked out. Check in the tool first.",
+      error: await tError("errors.cannotDeleteCustomerWithTools"),
     };
   }
 

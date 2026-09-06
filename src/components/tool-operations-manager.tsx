@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeftRight, ArrowRightLeft, StickyNote } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   checkInTool,
   checkOutTool,
@@ -51,6 +52,10 @@ export function ToolOperationsManager({
 }: ToolOperationsManagerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations("operations");
+  const tc = useTranslations("common");
+  const tf = useTranslations("fields");
 
   const statusFilter = searchParams.get("status") ?? "ALL";
   const searchQuery = searchParams.get("q") ?? "";
@@ -69,6 +74,10 @@ export function ToolOperationsManager({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function statusLabel(status: "IN" | "OUT") {
+    return status === "IN" ? tc("in") : tc("out");
+  }
 
   function applyFilters(next: { status?: string; q?: string; page?: number }) {
     const params = new URLSearchParams();
@@ -132,7 +141,7 @@ export function ToolOperationsManager({
       return;
     }
 
-    toast.success(`Tool ${checkoutTarget.localId} checked out`);
+    toast.success(t("successOut", { id: checkoutTarget.localId }));
     closeModals();
     router.refresh();
   }
@@ -157,7 +166,7 @@ export function ToolOperationsManager({
       return;
     }
 
-    toast.success(`Tool ${checkinTarget.localId} checked in`);
+    toast.success(t("successIn", { id: checkinTarget.localId }));
     closeModals();
     router.refresh();
   }
@@ -177,23 +186,23 @@ export function ToolOperationsManager({
               applyFilters({ q: formData.get("q") as string, page: 1 });
             }}>
             <div className="min-w-0 flex-1 space-y-2">
-              <Label htmlFor="searchQuery">Search</Label>
+              <Label htmlFor="searchQuery">{tc("search")}</Label>
               <Input
                 id="searchQuery"
                 name="q"
                 defaultValue={searchQuery}
-                placeholder="Search by any field..."
+                placeholder={tc("searchPlaceholderAny")}
               />
             </div>
             <Button
               type="submit"
               variant="secondary"
               className="mt-auto shrink-0">
-              Search
+              {tc("search")}
             </Button>
           </form>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{tc("status")}</Label>
             <Select
               value={statusFilter}
               onValueChange={(value) =>
@@ -203,9 +212,9 @@ export function ToolOperationsManager({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All</SelectItem>
-                <SelectItem value="IN">IN</SelectItem>
-                <SelectItem value="OUT">OUT</SelectItem>
+                <SelectItem value="ALL">{tc("all")}</SelectItem>
+                <SelectItem value="IN">{tc("in")}</SelectItem>
+                <SelectItem value="OUT">{tc("out")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -213,40 +222,52 @@ export function ToolOperationsManager({
       </div>
 
       {tools.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No tools found. Adjust your search or filters.
-        </p>
+        <p className="text-sm text-muted-foreground">{tc("noToolsFound")}</p>
       ) : (
         <>
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">#</th>
-                  <th className="px-4 py-3 text-left font-medium">Local ID</th>
                   <th className="px-4 py-3 text-left font-medium">
-                    Part number
+                    {tf("seq")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium">
-                    Serial number
-                  </th>
-                  <th className="px-4 py-3 text-left font-medium">Name</th>
-                  <th className="px-4 py-3 text-left font-medium">
-                    Location/sub
+                    {tf("localId")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium">
-                    Checked out at
+                    {tf("partNumber")}
                   </th>
                   <th className="px-4 py-3 text-left font-medium">
-                    Expected return
+                    {tf("serialNumber")}
                   </th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-right font-medium">Action</th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    {tc("name")}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    {tc("locationSub")}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    {tf("checkedOutAt")}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    {tf("expectedReturn")}
+                  </th>
+                  <th className="px-4 py-3 text-left font-medium">
+                    {tf("status")}
+                  </th>
+                  <th className="px-4 py-3 text-right font-medium">
+                    {tc("action")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {tools.map((tool) => (
-                  <tr key={tool.localId} className="border-b last:border-0">
+                  <tr
+                    key={tool.localId}
+                    id={`tool-row-${tool.localId}`}
+                    data-local-id={tool.localId}
+                    className="border-b last:border-0">
                     <td className="px-4 py-3 text-muted-foreground">
                       {tool.seq ?? "—"}
                     </td>
@@ -263,15 +284,15 @@ export function ToolOperationsManager({
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {tool.status === "OUT" && tool.checkedOutAt
-                        ? formatDateTime(tool.checkedOutAt)
+                        ? formatDateTime(tool.checkedOutAt, locale)
                         : "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {tool.status === "OUT" && tool.expectedReturnAt ? (
                         <div className="inline-flex items-center gap-2">
-                          {formatDate(tool.expectedReturnAt)}
+                          {formatDate(tool.expectedReturnAt, locale)}
                           {isOverdue(tool.expectedReturnAt) ? (
-                            <Badge variant="destructive">Overdue</Badge>
+                            <Badge variant="destructive">{tc("overdue")}</Badge>
                           ) : null}
                         </div>
                       ) : (
@@ -281,7 +302,7 @@ export function ToolOperationsManager({
                     <td className="px-4 py-3">
                       <Badge
                         variant={tool.status === "IN" ? "success" : "warning"}>
-                        {tool.status}
+                        {statusLabel(tool.status)}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -290,7 +311,7 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label="View note"
+                            aria-label={tc("viewNote")}
                             onClick={() => setViewingNotes(tool)}>
                             <StickyNote className="h-4 w-4" />
                           </Button>
@@ -299,7 +320,8 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label="Check out tool"
+                            data-action="checkout"
+                            aria-label={t("checkOutTool")}
                             onClick={() => openCheckout(tool)}>
                             <ArrowRightLeft className="h-4 w-4" />
                           </Button>
@@ -307,7 +329,8 @@ export function ToolOperationsManager({
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label="Check in tool"
+                            data-action="checkin"
+                            aria-label={t("checkInTool")}
                             onClick={() => openCheckin(tool)}>
                             <ArrowLeftRight className="h-4 w-4" />
                           </Button>
@@ -322,7 +345,11 @@ export function ToolOperationsManager({
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {rangeStart}–{rangeEnd} of {total} tools
+              {tc("showingTools", {
+                from: rangeStart,
+                to: rangeEnd,
+                total,
+              })}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -330,17 +357,17 @@ export function ToolOperationsManager({
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => applyFilters({ page: page - 1 })}>
-                Previous
+                {tc("previous")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                {tc("pageOf", { page, totalPages })}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => applyFilters({ page: page + 1 })}>
-                Next
+                {tc("next")}
               </Button>
             </div>
           </div>
@@ -350,7 +377,7 @@ export function ToolOperationsManager({
       <Dialog open={!!checkoutTarget} onOpenChange={() => closeModals()}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Check out tool</DialogTitle>
+            <DialogTitle>{t("checkOutTool")}</DialogTitle>
             <DialogDescription>
               {checkoutTarget?.localId} — {checkoutTarget?.serialNumber}
             </DialogDescription>
@@ -366,10 +393,11 @@ export function ToolOperationsManager({
                 </p>
                 {(checkoutTarget.location || checkoutTarget.subLocation) && (
                   <p className="mt-1 text-muted-foreground">
-                    Location:{" "}
-                    {[checkoutTarget.location, checkoutTarget.subLocation]
-                      .filter(Boolean)
-                      .join(" / ")}
+                    {t("locationLabel", {
+                      location: [checkoutTarget.location, checkoutTarget.subLocation]
+                        .filter(Boolean)
+                        .join(" / "),
+                    })}
                   </p>
                 )}
               </div>
@@ -381,7 +409,7 @@ export function ToolOperationsManager({
               />
 
               <div className="space-y-2">
-                <Label htmlFor="expectedReturnAt">Expected return</Label>
+                <Label htmlFor="expectedReturnAt">{tf("expectedReturn")}</Label>
                 <Input
                   id="expectedReturnAt"
                   type="date"
@@ -392,7 +420,7 @@ export function ToolOperationsManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="checkoutNotes">Notes (optional)</Label>
+                <Label htmlFor="checkoutNotes">{tc("notesOptional")}</Label>
                 <Textarea
                   id="checkoutNotes"
                   value={notes}
@@ -411,12 +439,12 @@ export function ToolOperationsManager({
                   variant="outline"
                   onClick={closeModals}
                   disabled={loading}>
-                  Cancel
+                  {tc("cancel")}
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading || !customerId || !expectedReturnAt}>
-                  {loading ? "Checking out..." : "Check out"}
+                  {loading ? t("checkingOut") : t("checkOut")}
                 </Button>
               </div>
             </form>
@@ -427,7 +455,7 @@ export function ToolOperationsManager({
       <Dialog open={!!checkinTarget} onOpenChange={() => closeModals()}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Check in tool</DialogTitle>
+            <DialogTitle>{t("checkInTool")}</DialogTitle>
             <DialogDescription>
               {checkinTarget?.localId} — {checkinTarget?.serialNumber}
             </DialogDescription>
@@ -444,7 +472,7 @@ export function ToolOperationsManager({
               </div>
 
               <div className="rounded-md border p-3 text-sm">
-                <p className="font-medium">Custody</p>
+                <p className="font-medium">{tf("custody")}</p>
                 {checkinTarget.customerName ? (
                   <>
                     <p className="mt-1 text-muted-foreground">
@@ -453,21 +481,30 @@ export function ToolOperationsManager({
                       {checkinTarget.customerSpecialization})
                     </p>
                     <p className="mt-1 text-muted-foreground">
-                      Checked out: {formatDateTime(checkinTarget.checkedOutAt)}
+                      {t("checkedOutLabel", {
+                        date: formatDateTime(
+                          checkinTarget.checkedOutAt,
+                          locale,
+                        ),
+                      })}
                     </p>
                     <div className="mt-1 text-muted-foreground">
-                      Expected return:{" "}
-                      {formatDate(checkinTarget.expectedReturnAt)}
+                      {t("expectedReturnLabel", {
+                        date: formatDate(
+                          checkinTarget.expectedReturnAt,
+                          locale,
+                        ),
+                      })}
                       {isOverdue(checkinTarget.expectedReturnAt) ? (
                         <Badge variant="destructive" className="ml-2">
-                          Overdue
+                          {tc("overdue")}
                         </Badge>
                       ) : null}
                     </div>
                   </>
                 ) : (
                   <p className="mt-1 text-muted-foreground">
-                    No custody details found.
+                    {t("noCustody")}
                   </p>
                 )}
               </div>
@@ -477,7 +514,7 @@ export function ToolOperationsManager({
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="checkinNotes">Notes (optional)</Label>
+                <Label htmlFor="checkinNotes">{tc("notesOptional")}</Label>
                 <Textarea
                   id="checkinNotes"
                   value={notes}
@@ -496,10 +533,10 @@ export function ToolOperationsManager({
                   variant="outline"
                   onClick={closeModals}
                   disabled={loading}>
-                  Cancel
+                  {tc("cancel")}
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading ? "Checking in..." : "Check in"}
+                  {loading ? t("checkingIn") : t("checkIn")}
                 </Button>
               </div>
             </form>
@@ -510,18 +547,20 @@ export function ToolOperationsManager({
       <Dialog open={!!viewingNotes} onOpenChange={() => setViewingNotes(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Notes</DialogTitle>
+            <DialogTitle>{tc("notes")}</DialogTitle>
             <DialogDescription>
               {viewingNotes?.localId} — {viewingNotes?.serialNumber}
             </DialogDescription>
           </DialogHeader>
           {viewingNotes?.status === "IN" ? (
-            <p className="text-xs text-muted-foreground">From last checkout</p>
+            <p className="text-xs text-muted-foreground">
+              {t("fromLastCheckout")}
+            </p>
           ) : null}
           <CheckoutNotesDisplay notes={viewingNotes?.notes} />
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setViewingNotes(null)}>
-              Close
+              {tc("close")}
             </Button>
           </div>
         </DialogContent>

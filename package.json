@@ -11,7 +11,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:prod": "tsx src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "seed:demo": "tsx src/db/seed-demo.ts",
+    "seed:demo:local": "tsx src/db/seed-demo.ts --local"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -29,6 +31,7 @@
     "lucide-react": "^0.539.0",
     "next": "^15.4.6",
     "next-auth": "^5.0.0-beta.29",
+    "next-intl": "^4.14.2",
     "postgres": "^3.4.7",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

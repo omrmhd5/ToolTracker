@@ -15,6 +15,7 @@ async function runMigrations() {
 
   const client = postgres(connectionString, {
     max: 1,
+    prepare: false,
     ...(needsSsl ? { ssl: "require" as const } : {}),
   });
   const db = drizzle(client);

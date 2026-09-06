@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   searchCustomersForCheckout,
   type CustomerOption,
@@ -26,6 +27,10 @@ export function CustomerPicker({
   value: string;
   onChange: (id: string) => void;
 }) {
+  const t = useTranslations("picker");
+  const tc = useTranslations("common");
+  const to = useTranslations("operations");
+
   const [selected, setSelected] = useState<CustomerOption | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
@@ -95,7 +100,7 @@ export function CustomerPicker({
   if (selected) {
     return (
       <div className="space-y-2">
-        <Label>Customer</Label>
+        <Label>{to("customer")}</Label>
         <div className="flex items-start justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
           <div>
             <p className="font-medium">{selected.employeeId}</p>
@@ -110,7 +115,7 @@ export function CustomerPicker({
             size="sm"
             className="shrink-0"
             onClick={clearSelection}>
-            Change
+            {tc("change")}
           </Button>
         </div>
       </div>
@@ -119,28 +124,24 @@ export function CustomerPicker({
 
   return (
     <div className="space-y-2">
-      <Label>Customer</Label>
+      <Label>{to("customer")}</Label>
       <Button
         type="button"
         variant="outline"
         className="w-full justify-center"
         onClick={openModal}>
         <Users className="h-4 w-4" />
-        Choose customer
+        {t("choose")}
       </Button>
       {hasAnyCustomers === false ? (
-        <p className="text-sm text-destructive">
-          No customers in the system. An admin must add customers first.
-        </p>
+        <p className="text-sm text-destructive">{t("noneInSystem")}</p>
       ) : null}
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Choose customer</DialogTitle>
-            <DialogDescription>
-              Search by employee ID, name, or specialization.
-            </DialogDescription>
+            <DialogTitle>{t("choose")}</DialogTitle>
+            <DialogDescription>{t("searchHint")}</DialogDescription>
           </DialogHeader>
 
           <form
@@ -149,7 +150,7 @@ export function CustomerPicker({
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search customers..."
+              placeholder={t("searchPlaceholder")}
               className="min-w-0 flex-1"
             />
             <Button
@@ -157,16 +158,14 @@ export function CustomerPicker({
               variant="secondary"
               disabled={loading}
               className="shrink-0">
-              Search
+              {tc("search")}
             </Button>
           </form>
 
           {loading ? (
-            <p className="text-sm text-muted-foreground">
-              Loading customers...
-            </p>
+            <p className="text-sm text-muted-foreground">{t("loading")}</p>
           ) : customers.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No customers found.</p>
+            <p className="text-sm text-muted-foreground">{t("noneFound")}</p>
           ) : (
             <>
               <div className="rounded-md border">
@@ -187,7 +186,11 @@ export function CustomerPicker({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {rangeStart}–{rangeEnd} of {total}
+                  {tc("showingCount", {
+                    from: rangeStart,
+                    to: rangeEnd,
+                    total,
+                  })}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -196,10 +199,10 @@ export function CustomerPicker({
                     size="sm"
                     disabled={page <= 1 || loading}
                     onClick={() => setPage(page - 1)}>
-                    Previous
+                    {tc("previous")}
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Page {page} of {totalPages}
+                    {tc("pageOf", { page, totalPages })}
                   </span>
                   <Button
                     type="button"
@@ -207,7 +210,7 @@ export function CustomerPicker({
                     size="sm"
                     disabled={page >= totalPages || loading}
                     onClick={() => setPage(page + 1)}>
-                    Next
+                    {tc("next")}
                   </Button>
                 </div>
               </div>

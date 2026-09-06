@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   createTool,
   deleteTool,
@@ -72,6 +73,10 @@ export function ToolsManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations("adminTools");
+  const tc = useTranslations("common");
+  const tf = useTranslations("fields");
 
   const [open, setOpen] = useState(false);
   const [viewing, setViewing] = useState<ToolRow | null>(null);
@@ -83,6 +88,10 @@ export function ToolsManager({
 
   const statusFilter = searchParams.get("status") ?? "ALL";
   const searchQuery = searchParams.get("q") ?? "";
+
+  function statusLabel(status: "IN" | "OUT") {
+    return status === "IN" ? tc("in") : tc("out");
+  }
 
   function applyFilters(status: string, q: string, nextPage = 1) {
     const params = new URLSearchParams();
@@ -141,7 +150,7 @@ export function ToolsManager({
       return;
     }
 
-    toast.success(editing ? "Tool updated" : "Tool created");
+    toast.success(editing ? t("updated") : t("created"));
 
     setOpen(false);
     setEditing(null);
@@ -162,7 +171,7 @@ export function ToolsManager({
       return;
     }
 
-    toast.success("Tool deleted");
+    toast.success(t("deleted"));
 
     setDeleteTarget(null);
     setError(null);
@@ -184,23 +193,23 @@ export function ToolsManager({
               applyFilters(statusFilter, formData.get("q") as string, 1);
             }}>
             <div className="min-w-0 flex-1 space-y-2">
-              <Label htmlFor="searchQuery">Search</Label>
+              <Label htmlFor="searchQuery">{tc("search")}</Label>
               <Input
                 id="searchQuery"
                 name="q"
                 defaultValue={searchQuery}
-                placeholder="Search by any field..."
+                placeholder={tc("searchPlaceholderAny")}
               />
             </div>
             <Button
               type="submit"
               variant="secondary"
               className="mt-auto shrink-0">
-              Search
+              {tc("search")}
             </Button>
           </form>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{tc("status")}</Label>
             <Select
               value={statusFilter}
               onValueChange={(value) => applyFilters(value, searchQuery, 1)}>
@@ -208,16 +217,16 @@ export function ToolsManager({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">All</SelectItem>
-                <SelectItem value="IN">IN</SelectItem>
-                <SelectItem value="OUT">OUT</SelectItem>
+                <SelectItem value="ALL">{tc("all")}</SelectItem>
+                <SelectItem value="IN">{tc("in")}</SelectItem>
+                <SelectItem value="OUT">{tc("out")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <Button onClick={openCreate} className="shrink-0">
           <Plus className="h-4 w-4" />
-          Add tool
+          {t("addTool")}
         </Button>
       </div>
 
@@ -226,27 +235,39 @@ export function ToolsManager({
       ) : null}
 
       {tools.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No tools found. Add a tool or adjust your filters.
-        </p>
+        <p className="text-sm text-muted-foreground">{tc("noToolsAdmin")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">#</th>
-                <th className="px-4 py-3 text-left font-medium">Local ID</th>
-                <th className="px-4 py-3 text-left font-medium">Part number</th>
                 <th className="px-4 py-3 text-left font-medium">
-                  Serial number
+                  {tf("seq")}
                 </th>
-                <th className="px-4 py-3 text-left font-medium">Name</th>
                 <th className="px-4 py-3 text-left font-medium">
-                  Location/sub
+                  {tf("localId")}
                 </th>
-                <th className="px-4 py-3 text-left font-medium">Inventory</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tf("partNumber")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tf("serialNumber")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("name")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("locationSub")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("inventory")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tf("status")}
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {tc("actions")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -267,12 +288,12 @@ export function ToolsManager({
                       .join(" / ") || "—"}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {formatDate(tool.inventoryDate)}
+                    {formatDate(tool.inventoryDate, locale)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge
                       variant={tool.status === "IN" ? "success" : "warning"}>
-                      {tool.status}
+                      {statusLabel(tool.status)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -280,21 +301,21 @@ export function ToolsManager({
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="View tool details"
+                        aria-label={t("viewDetails")}
                         onClick={() => openView(tool)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Edit tool"
+                        aria-label={t("editTool")}
                         onClick={() => openEdit(tool)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Delete tool"
+                        aria-label={t("deleteTool")}
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(tool);
@@ -313,7 +334,11 @@ export function ToolsManager({
       {tools.length > 0 ? (
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {rangeStart}–{rangeEnd} of {total} tools
+            {tc("showingTools", {
+              from: rangeStart,
+              to: rangeEnd,
+              total,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -321,17 +346,17 @@ export function ToolsManager({
               size="sm"
               disabled={page <= 1}
               onClick={() => applyFilters(statusFilter, searchQuery, page - 1)}>
-              Previous
+              {tc("previous")}
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+              {tc("pageOf", { page, totalPages })}
             </span>
             <Button
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => applyFilters(statusFilter, searchQuery, page + 1)}>
-              Next
+              {tc("next")}
             </Button>
           </div>
         </div>
@@ -340,59 +365,71 @@ export function ToolsManager({
       <Dialog open={!!viewing} onOpenChange={() => setViewing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Tool details</DialogTitle>
+            <DialogTitle>{t("toolDetails")}</DialogTitle>
             <DialogDescription>
               {viewing?.serialNumber} — {viewing?.partNumber}
             </DialogDescription>
           </DialogHeader>
           {viewing ? (
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <DetailItem label="#" value={viewing.seq ?? "—"} />
-              <DetailItem label="Local ID" value={viewing.localId} />
-              <DetailItem label="NSN" value={viewing.nsn || "—"} />
-              <DetailItem label="Part number" value={viewing.partNumber} />
-              <DetailItem label="Serial number" value={viewing.serialNumber} />
+              <DetailItem label={tf("seq")} value={viewing.seq ?? "—"} />
+              <DetailItem label={tf("localId")} value={viewing.localId} />
+              <DetailItem label={tf("nsn")} value={viewing.nsn || "—"} />
               <DetailItem
-                label="Nomenclature"
+                label={tf("partNumber")}
+                value={viewing.partNumber}
+              />
+              <DetailItem
+                label={tf("serialNumber")}
+                value={viewing.serialNumber}
+              />
+              <DetailItem
+                label={tf("nomenclature")}
                 value={viewing.nomenclature || "—"}
               />
               <DetailItem
-                label="Common name"
+                label={tf("commonName")}
                 value={viewing.commonName || "—"}
               />
-              <DetailItem label="Auth qty" value={viewing.authqty} />
-              <DetailItem label="Assigned qty" value={viewing.assignedqty} />
-              <DetailItem label="Location" value={viewing.location || "—"} />
+              <DetailItem label={tf("authqty")} value={viewing.authqty} />
               <DetailItem
-                label="Sub-location"
+                label={tf("assignedqty")}
+                value={viewing.assignedqty}
+              />
+              <DetailItem
+                label={tf("location")}
+                value={viewing.location || "—"}
+              />
+              <DetailItem
+                label={tf("subLocation")}
                 value={viewing.subLocation || "—"}
               />
               <DetailItem
-                label="Status"
+                label={tf("status")}
                 value={
                   <Badge
                     variant={viewing.status === "IN" ? "success" : "warning"}>
-                    {viewing.status}
+                    {statusLabel(viewing.status)}
                   </Badge>
                 }
               />
               <DetailItem
-                label="Custody"
+                label={tf("custody")}
                 value={
                   viewing.custodyExpectedReturn
-                    ? formatDate(viewing.custodyExpectedReturn)
+                    ? formatDate(viewing.custodyExpectedReturn, locale)
                     : "—"
                 }
               />
               <DetailItem
-                label="Inventory"
-                value={formatDate(viewing.inventoryDate)}
+                label={tc("inventory")}
+                value={formatDate(viewing.inventoryDate, locale)}
               />
             </dl>
           ) : null}
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setViewing(null)}>
-              Close
+              {tc("close")}
             </Button>
             {viewing ? (
               <Button
@@ -400,7 +437,7 @@ export function ToolsManager({
                   setViewing(null);
                   openEdit(viewing);
                 }}>
-                Edit tool
+                {t("editTool")}
               </Button>
             ) : null}
           </div>
@@ -410,20 +447,16 @@ export function ToolsManager({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit tool" : "Add tool"}</DialogTitle>
+            <DialogTitle>{editing ? t("editTool") : t("addTool")}</DialogTitle>
             <DialogDescription>
-              One row per physical tool. Local ID is the primary key and cannot
-              be changed after creation. The # column is assigned automatically
-              in sequence.
-              {editing?.status === "OUT"
-                ? " This tool is checked out — only details and location can be updated."
-                : null}
+              {t("formHint")}
+              {editing?.status === "OUT" ? ` ${t("checkedOutLock")}` : null}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>#</Label>
+                <Label>{tf("seq")}</Label>
                 <Input
                   value={
                     editing
@@ -435,7 +468,7 @@ export function ToolsManager({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="localId">Local ID</Label>
+                <Label htmlFor="localId">{tf("localId")}</Label>
                 <Input
                   id="localId"
                   name="localId"
@@ -449,7 +482,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nsn">NSN</Label>
+              <Label htmlFor="nsn">{tf("nsn")}</Label>
               <Input
                 id="nsn"
                 name="nsn"
@@ -459,7 +492,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="partNumber">Part number</Label>
+              <Label htmlFor="partNumber">{tf("partNumber")}</Label>
               <Input
                 id="partNumber"
                 name="partNumber"
@@ -470,7 +503,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="serialNumber">Serial number</Label>
+              <Label htmlFor="serialNumber">{tf("serialNumber")}</Label>
               <Input
                 id="serialNumber"
                 name="serialNumber"
@@ -481,7 +514,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nomenclature">Nomenclature</Label>
+              <Label htmlFor="nomenclature">{tf("nomenclature")}</Label>
               <Input
                 id="nomenclature"
                 name="nomenclature"
@@ -491,7 +524,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="commonName">Common name</Label>
+              <Label htmlFor="commonName">{tf("commonName")}</Label>
               <Input
                 id="commonName"
                 name="commonName"
@@ -501,7 +534,7 @@ export function ToolsManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="authqty">Auth qty</Label>
+              <Label htmlFor="authqty">{tf("authqty")}</Label>
               <Input
                 id="authqty"
                 name="authqty"
@@ -514,29 +547,29 @@ export function ToolsManager({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">{tf("location")}</Label>
                 <Input
                   id="location"
                   name="location"
                   defaultValue={editing?.location ?? ""}
-                  placeholder="Shelf A"
+                  placeholder={t("locationPlaceholder")}
                   disabled={loading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="subLocation">Sub-location</Label>
+                <Label htmlFor="subLocation">{tf("subLocation")}</Label>
                 <Input
                   id="subLocation"
                   name="subLocation"
                   defaultValue={editing?.subLocation ?? ""}
-                  placeholder="Bin 3"
+                  placeholder={t("subLocationPlaceholder")}
                   disabled={loading}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="inventoryDate">Inventory</Label>
+              <Label htmlFor="inventoryDate">{tc("inventory")}</Label>
               <Input
                 id="inventoryDate"
                 name="inventoryDate"
@@ -551,14 +584,14 @@ export function ToolsManager({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}>
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading
-                  ? "Saving..."
+                  ? tc("saving")
                   : editing
-                    ? "Save changes"
-                    : "Create tool"}
+                    ? tc("saveChanges")
+                    : t("createTool")}
               </Button>
             </div>
           </form>
@@ -570,19 +603,23 @@ export function ToolsManager({
         onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete tool?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete tool {deleteTarget?.localId} (
-              {deleteTarget?.serialNumber}). This cannot be undone.
+              {t("deleteBody", {
+                id: deleteTarget?.localId ?? "",
+                serial: deleteTarget?.serialNumber ?? "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && deleteTarget ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : null}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>
+              {tc("cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={loading}>
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? tc("deleting") : tc("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

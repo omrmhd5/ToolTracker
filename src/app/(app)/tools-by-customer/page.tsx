@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { tUi } from "@/lib/i18n";
 
 type SearchParams = Promise<{
   q?: string;
@@ -30,20 +31,21 @@ async function ToolsByCustomerContent({
   return <ToolsByCustomerManager {...data} />;
 }
 
-export default function ToolsByCustomerPage({
+export default async function ToolsByCustomerPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  const hint = await tUi("toolsByCustomer.hint");
+  const loading = await tUi("common.loadingCustomers");
+
   return (
-    <Card>
+    <Card id="tools-by-customer-page">
       <CardHeader>
-        <CardDescription>
-          Browse customers and view their currently checked out tools.
-        </CardDescription>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading customers" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <ToolsByCustomerContent searchParams={searchParams} />
         </Suspense>
       </CardContent>

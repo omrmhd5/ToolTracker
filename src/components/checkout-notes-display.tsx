@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { parseCheckoutNotes } from "@/lib/utils";
 
 export function CheckoutNotesDisplay({
@@ -5,6 +8,7 @@ export function CheckoutNotesDisplay({
 }: {
   notes: string | null | undefined;
 }) {
+  const t = useTranslations("operations");
   const { checkoutNote, checkInNote } = parseCheckoutNotes(notes);
 
   if (!checkoutNote && !checkInNote) {
@@ -15,7 +19,7 @@ export function CheckoutNotesDisplay({
     <div className="space-y-3 rounded-md border bg-muted/30 p-3 text-sm">
       {checkoutNote ? (
         <div>
-          <p className="font-medium">Check out</p>
+          <p className="font-medium">{t("checkOut")}</p>
           <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
             {checkoutNote}
           </p>
@@ -23,7 +27,7 @@ export function CheckoutNotesDisplay({
       ) : null}
       {checkInNote ? (
         <div>
-          <p className="font-medium">Check-in</p>
+          <p className="font-medium">{t("checkIn")}</p>
           <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
             {checkInNote}
           </p>

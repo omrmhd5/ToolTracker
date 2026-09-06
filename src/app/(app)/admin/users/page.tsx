@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { tUi } from "@/lib/i18n";
 
 async function UsersContent({ currentUserId }: { currentUserId: string }) {
   const users = await getUsers();
@@ -24,16 +25,18 @@ export default async function AdminUsersPage() {
     redirect("/dashboard");
   }
 
+  const title = await tUi("adminUsers.title");
+  const hint = await tUi("adminUsers.hint");
+  const loading = await tUi("common.loadingUsers");
+
   return (
-    <Card>
+    <Card id="admin-users-page">
       <CardHeader>
-        <CardTitle>User accounts</CardTitle>
-        <CardDescription>
-          Create and manage login accounts. Deactivated users cannot sign in.
-        </CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading users" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <UsersContent currentUserId={session.user.id} />
         </Suspense>
       </CardContent>

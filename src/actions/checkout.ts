@@ -4,6 +4,7 @@ import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools } from "@/db/schema";
 import { requireAuth } from "@/lib/auth-utils";
+import { tError, tZod } from "@/lib/i18n";
 import { revalidateCheckoutData } from "@/lib/revalidate-app";
 import { checkInSchema, checkOutSchema } from "@/lib/validations/checkout";
 import type { ActionResult } from "@/lib/utils";
@@ -224,7 +225,7 @@ export async function checkOutTool(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -237,7 +238,7 @@ export async function checkOutTool(
     .limit(1);
 
   if (!customer) {
-    return { success: false, error: "Customer not found" };
+    return { success: false, error: await tError("errors.customerNotFound") };
   }
 
   try {
@@ -249,11 +250,11 @@ export async function checkOutTool(
         .limit(1);
 
       if (!tool) {
-        throw new Error("Tool not found");
+        throw new Error(await tError("errors.toolNotFound"));
       }
 
       if (tool.status !== "IN") {
-        throw new Error("This tool is already checked out");
+        throw new Error(await tError("errors.alreadyCheckedOut"));
       }
 
       const [openLog] = await tx
@@ -268,7 +269,7 @@ export async function checkOutTool(
         .limit(1);
 
       if (openLog) {
-        throw new Error("This tool already has an open checkout record");
+        throw new Error(await tError("errors.openCheckoutExists"));
       }
 
       const [log] = await tx
@@ -300,7 +301,7 @@ export async function checkOutTool(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Checkout failed",
+      error: error instanceof Error ? error.message : await tError("errors.checkoutFailed"),
     };
   }
 }
@@ -312,7 +313,7 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -327,11 +328,11 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
         .limit(1);
 
       if (!tool) {
-        throw new Error("Tool not found");
+        throw new Error(await tError("errors.toolNotFound"));
       }
 
       if (tool.status !== "OUT") {
-        throw new Error("This tool is not checked out");
+        throw new Error(await tError("errors.notCheckedOut"));
       }
 
       const [openLog] = await tx
@@ -346,7 +347,7 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
         .limit(1);
 
       if (!openLog) {
-        throw new Error("No open checkout record found for this tool");
+        throw new Error(await tError("errors.noOpenCheckout"));
       }
 
       const checkInNotes = data.notes?.trim();
@@ -381,7 +382,7 @@ export async function checkInTool(input: unknown): Promise<ActionResult> {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Check-in failed",
+      error: error instanceof Error ? error.message : await tError("errors.checkInFailed"),
     };
   }
 }

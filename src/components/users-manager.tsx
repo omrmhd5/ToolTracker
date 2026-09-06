@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Plus } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { createUser, updateUser } from "@/actions/users";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,12 @@ export function UsersManager({
   currentUserId: string;
 }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations("adminUsers");
+  const tc = useTranslations("common");
+  const tLogin = useTranslations("login");
+  const tRoles = useTranslations("roles");
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<UserRow | null>(null);
   const [role, setRole] = useState<"admin" | "user">("user");
@@ -99,7 +106,7 @@ export function UsersManager({
       return;
     }
 
-    toast.success(editing ? "User updated" : "User created");
+    toast.success(editing ? t("updated") : t("created"));
     setOpen(false);
     setEditing(null);
     router.refresh();
@@ -110,25 +117,35 @@ export function UsersManager({
       <div className="mb-4 flex justify-end">
         <Button onClick={openCreate}>
           <Plus className="h-4 w-4" />
-          Add user
+          {t("addUser")}
         </Button>
       </div>
 
       {users.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No users yet. Add the first user.
-        </p>
+        <p className="text-sm text-muted-foreground">{tc("noUsers")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Name</th>
-                <th className="px-4 py-3 text-left font-medium">Email</th>
-                <th className="px-4 py-3 text-left font-medium">Role</th>
-                <th className="px-4 py-3 text-left font-medium">Status</th>
-                <th className="px-4 py-3 text-left font-medium">Created</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("name")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("email")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("role")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("status")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("created")}
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {tc("actions")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -141,22 +158,22 @@ export function UsersManager({
                   <td className="px-4 py-3">
                     <Badge
                       variant={user.role === "admin" ? "default" : "secondary"}>
-                      {user.role}
+                      {tRoles(user.role)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={user.isActive ? "success" : "destructive"}>
-                      {user.isActive ? "Active" : "Inactive"}
+                      {user.isActive ? tc("active") : tc("inactive")}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {formatDateTime(user.createdAt)}
+                    {formatDateTime(user.createdAt, locale)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label="Edit user"
+                      aria-label={t("editAria")}
                       onClick={() => openEdit(user)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -171,16 +188,14 @@ export function UsersManager({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit user" : "Add user"}</DialogTitle>
+            <DialogTitle>{editing ? t("editUser") : t("addUser")}</DialogTitle>
             <DialogDescription>
-              {editing
-                ? "Update account details. Leave password blank to keep the current password."
-                : "Create a new login account."}
+              {editing ? t("editHint") : t("createHint")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{tc("name")}</Label>
               <Input
                 id="name"
                 name="name"
@@ -190,7 +205,7 @@ export function UsersManager({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{tc("email")}</Label>
               <Input
                 id="email"
                 name="email"
@@ -201,7 +216,7 @@ export function UsersManager({
               />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>{tc("role")}</Label>
               <Select
                 value={role}
                 onValueChange={(value) => setRole(value as "admin" | "user")}
@@ -210,14 +225,14 @@ export function UsersManager({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">{tRoles("user")}</SelectItem>
+                  <SelectItem value="admin">{tRoles("admin")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {editing ? (
               <div className="space-y-2">
-                <Label>Status</Label>
+                <Label>{tc("status")}</Label>
                 <Select
                   value={isActive ? "true" : "false"}
                   onValueChange={(value) => setIsActive(value === "true")}
@@ -226,15 +241,15 @@ export function UsersManager({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Active</SelectItem>
-                    <SelectItem value="false">Inactive</SelectItem>
+                    <SelectItem value="true">{tc("active")}</SelectItem>
+                    <SelectItem value="false">{tc("inactive")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="password">
-                {editing ? "New password (optional)" : "Password"}
+                {editing ? t("newPassword") : tLogin("password")}
               </Label>
               <Input
                 id="password"
@@ -251,14 +266,14 @@ export function UsersManager({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}>
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading
-                  ? "Saving..."
+                  ? tc("saving")
                   : editing
-                    ? "Save changes"
-                    : "Create user"}
+                    ? tc("saveChanges")
+                    : t("createUser")}
               </Button>
             </div>
           </form>

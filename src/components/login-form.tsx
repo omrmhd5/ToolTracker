@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AppLogo } from "@/components/app-logo";
+import { DemoCredentialsCard } from "@/components/demo-credentials-card";
+import { LanguageToggle } from "@/components/language-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +22,7 @@ import { toast } from "sonner";
 
 export function LoginForm() {
   const router = useRouter();
+  const t = useTranslations("login");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,8 +44,9 @@ export function LoginForm() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password");
-      toast.error("Invalid email or password");
+      const message = t("invalid");
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -50,19 +55,24 @@ export function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div
+      id="login-page"
+      className="relative flex min-h-full flex-col items-center justify-center gap-4 overflow-y-auto bg-background p-4">
+      <div className="absolute right-4 top-4">
+        <LanguageToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center">
             <AppLogo size={56} />
           </div>
-          <CardTitle>Tool Tracker</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardTitle>{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input
                 id="email"
                 name="email"
@@ -73,7 +83,7 @@ export function LoginForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("password")}</Label>
               <Input
                 id="password"
                 name="password"
@@ -85,11 +95,12 @@ export function LoginForm() {
             </div>
             <FormError>{error}</FormError>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? t("submitting") : t("submit")}
             </Button>
           </form>
         </CardContent>
       </Card>
+      <DemoCredentialsCard />
     </div>
   );
 }

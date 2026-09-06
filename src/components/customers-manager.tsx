@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   createCustomer,
   deleteCustomer,
@@ -56,6 +57,11 @@ export function CustomersManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations("adminCustomers");
+  const tc = useTranslations("common");
+  const tf = useTranslations("fields");
+
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CustomerRow | null>(null);
@@ -113,7 +119,7 @@ export function CustomersManager({
       return;
     }
 
-    toast.success(editing ? "Customer updated" : "Customer created");
+    toast.success(editing ? t("updated") : t("created"));
     setOpen(false);
     setEditing(null);
     router.refresh();
@@ -133,7 +139,7 @@ export function CustomersManager({
       return;
     }
 
-    toast.success("Customer deleted");
+    toast.success(t("deleted"));
     setDeleteTarget(null);
     setError(null);
     router.refresh();
@@ -153,24 +159,24 @@ export function CustomersManager({
             applyFilters({ q: formData.get("q") as string, page: 1 });
           }}>
           <div className="min-w-0 flex-1 space-y-2">
-            <Label htmlFor="searchQuery">Search</Label>
+            <Label htmlFor="searchQuery">{tc("search")}</Label>
             <Input
               id="searchQuery"
               name="q"
               defaultValue={searchQuery}
-              placeholder="Employee ID, name, or specialization"
+              placeholder={tc("searchCustomersPlaceholder")}
             />
           </div>
           <Button
             type="submit"
             variant="secondary"
             className="mt-auto shrink-0">
-            Search
+            {tc("search")}
           </Button>
         </form>
         <Button onClick={openCreate} className="shrink-0">
           <Plus className="h-4 w-4" />
-          Add customer
+          {t("addCustomer")}
         </Button>
       </div>
 
@@ -179,21 +185,27 @@ export function CustomersManager({
       ) : null}
 
       {customers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No customers found. Add a customer or adjust your search.
-        </p>
+        <p className="text-sm text-muted-foreground">{tc("noCustomersFound")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Employee ID</th>
-                <th className="px-4 py-3 text-left font-medium">Name</th>
                 <th className="px-4 py-3 text-left font-medium">
-                  Specialization
+                  {tf("employeeId")}
                 </th>
-                <th className="px-4 py-3 text-left font-medium">Created</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("name")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tf("specialization")}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {tc("created")}
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {tc("actions")}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -207,21 +219,21 @@ export function CustomersManager({
                     {customer.specialization}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {formatDateTime(customer.createdAt)}
+                    {formatDateTime(customer.createdAt, locale)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Edit customer"
+                        aria-label={t("editAria")}
                         onClick={() => openEdit(customer)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Delete customer"
+                        aria-label={t("deleteAria")}
                         onClick={() => {
                           setError(null);
                           setDeleteTarget(customer);
@@ -240,7 +252,11 @@ export function CustomersManager({
       {customers.length > 0 ? (
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {rangeStart}–{rangeEnd} of {total} customers
+            {tc("showingCustomers", {
+              from: rangeStart,
+              to: rangeEnd,
+              total,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -248,17 +264,17 @@ export function CustomersManager({
               size="sm"
               disabled={page <= 1}
               onClick={() => applyFilters({ page: page - 1 })}>
-              Previous
+              {tc("previous")}
             </Button>
             <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
+              {tc("pageOf", { page, totalPages })}
             </span>
             <Button
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
               onClick={() => applyFilters({ page: page + 1 })}>
-              Next
+              {tc("next")}
             </Button>
           </div>
         </div>
@@ -268,15 +284,13 @@ export function CustomersManager({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editing ? "Edit customer" : "Add customer"}
+              {editing ? t("editCustomer") : t("addCustomer")}
             </DialogTitle>
-            <DialogDescription>
-              Employee ID is the unique identifier (رقم وظيفي).
-            </DialogDescription>
+            <DialogDescription>{t("formHint")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID</Label>
+              <Label htmlFor="employeeId">{tf("employeeId")}</Label>
               <Input
                 id="employeeId"
                 name="employeeId"
@@ -286,7 +300,7 @@ export function CustomersManager({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{tc("name")}</Label>
               <Input
                 id="name"
                 name="name"
@@ -296,7 +310,7 @@ export function CustomersManager({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="specialization">Specialization</Label>
+              <Label htmlFor="specialization">{tf("specialization")}</Label>
               <Input
                 id="specialization"
                 name="specialization"
@@ -311,14 +325,14 @@ export function CustomersManager({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}>
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading
-                  ? "Saving..."
+                  ? tc("saving")
                   : editing
-                    ? "Save changes"
-                    : "Create customer"}
+                    ? tc("saveChanges")
+                    : t("createCustomer")}
               </Button>
             </div>
           </form>
@@ -330,19 +344,20 @@ export function CustomersManager({
         onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete customer?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {deleteTarget?.name}. This cannot be
-              undone.
+              {t("deleteBody", { name: deleteTarget?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && deleteTarget ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : null}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>
+              {tc("cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={loading}>
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? tc("deleting") : tc("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

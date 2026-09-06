@@ -5,6 +5,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/db";
 import { checkoutLogs, customers, tools, users } from "@/db/schema";
 import { requireAdmin, requireAuth } from "@/lib/auth-utils";
+import { tError } from "@/lib/i18n";
 import { revalidateHistoryData } from "@/lib/revalidate-app";
 import type { ActionResult } from "@/lib/utils";
 
@@ -192,7 +193,7 @@ export async function deleteCheckoutLog(id: string): Promise<ActionResult> {
     .limit(1);
 
   if (!log) {
-    return { success: false, error: "History record not found" };
+    return { success: false, error: await tError("errors.historyNotFound") };
   }
 
   await db.transaction(async (tx) => {

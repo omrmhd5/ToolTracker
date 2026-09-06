@@ -1,7 +1,8 @@
-import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
 import { getOverdueReminder } from "@/actions/dashboard";
 import { formatDate } from "@/lib/utils";
+import { getRequestLocale, translate } from "@/lib/i18n";
+import { AlertTriangle } from "lucide-react";
+import Link from "next/link";
 
 export async function OverdueReminder() {
   const { count, items } = await getOverdueReminder();
@@ -10,7 +11,12 @@ export async function OverdueReminder() {
     return null;
   }
 
+  const locale = await getRequestLocale();
   const remaining = count - items.length;
+  const heading =
+    count === 1
+      ? translate(locale, "overdue.one").replace("{count}", String(count))
+      : translate(locale, "overdue.other").replace("{count}", String(count));
 
   return (
     <div
@@ -24,17 +30,22 @@ export async function OverdueReminder() {
             <p
               id="overdue-reminder-heading"
               className="text-sm font-medium text-destructive">
-              {count} {count === 1 ? "tool is" : "tools are"} overdue for return
+              {heading}
             </p>
             <ul className="text-sm text-destructive/80">
               {items.map((item) => (
                 <li key={item.logId}>
                   {item.toolLocalId} ({item.serialNumber}) — {item.customerName}
-                  , due {formatDate(item.expectedReturnAt)}
+                  , {translate(locale, "dashboard.due").replace("{date}", formatDate(item.expectedReturnAt, locale))}
                 </li>
               ))}
               {remaining > 0 ? (
-                <li>and {remaining} more overdue checkout(s)</li>
+                <li>
+                  {translate(locale, "overdue.andMore").replace(
+                    "{count}",
+                    String(remaining),
+                  )}
+                </li>
               ) : null}
             </ul>
           </div>
@@ -42,7 +53,7 @@ export async function OverdueReminder() {
         <Link
           href="/operations?status=OUT"
           className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-destructive underline-offset-4 hover:underline">
-          View checked-out tools
+          {translate(locale, "overdue.viewCheckedOut")}
         </Link>
       </div>
     </div>

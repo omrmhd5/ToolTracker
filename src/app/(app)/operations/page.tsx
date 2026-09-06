@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { tUi } from "@/lib/i18n";
 
 type SearchParams = Promise<{
   status?: string;
@@ -32,21 +33,21 @@ async function OperationsContent({
   return <ToolOperationsManager {...data} />;
 }
 
-export default function OperationsPage({
+export default async function OperationsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
+  const hint = await tUi("operations.hint");
+  const loading = await tUi("common.loadingTools");
+
   return (
-    <Card>
+    <Card id="operations-page">
       <CardHeader>
-        <CardDescription>
-          Browse tools in sequence. Search any field, filter by status, and
-          check tools in or out.
-        </CardDescription>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading tools" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <OperationsContent searchParams={searchParams} />
         </Suspense>
       </CardContent>

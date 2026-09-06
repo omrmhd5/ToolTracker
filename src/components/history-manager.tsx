@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { StickyNote, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import type { CheckoutHistoryRow } from "@/actions/history";
 import { deleteAllCheckoutHistory, deleteCheckoutLog } from "@/actions/history";
 import { CheckoutNotesDisplay } from "@/components/checkout-notes-display";
@@ -50,6 +51,11 @@ export function HistoryManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations("history");
+  const tc = useTranslations("common");
+  const tf = useTranslations("fields");
+
   const [viewingNotes, setViewingNotes] = useState<CheckoutHistoryRow | null>(
     null,
   );
@@ -104,7 +110,7 @@ export function HistoryManager({
       return;
     }
 
-    toast.success("History record deleted");
+    toast.success(t("deleted"));
 
     setDeleteTarget(null);
     setError(null);
@@ -123,7 +129,7 @@ export function HistoryManager({
       return;
     }
 
-    toast.success("All history deleted");
+    toast.success(t("deletedAll"));
 
     setDeleteAllOpen(false);
     setError(null);
@@ -149,25 +155,25 @@ export function HistoryManager({
           });
         }}>
         <div className="space-y-2">
-          <Label htmlFor="toolQuery">Tool</Label>
+          <Label htmlFor="toolQuery">{tc("tool")}</Label>
           <Input
             id="toolQuery"
             name="q"
             defaultValue={toolQuery}
-            placeholder="Local ID, serial, or part #"
+            placeholder={tc("searchToolsPlaceholder")}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="customerQuery">Customer</Label>
+          <Label htmlFor="customerQuery">{t("customer")}</Label>
           <Input
             id="customerQuery"
             name="customer"
             defaultValue={customerQuery}
-            placeholder="Employee ID or name"
+            placeholder={tc("searchCustomerPlaceholder")}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="fromDate">From</Label>
+          <Label htmlFor="fromDate">{t("from")}</Label>
           <Input
             id="fromDate"
             name="from"
@@ -176,18 +182,18 @@ export function HistoryManager({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="toDate">To</Label>
+          <Label htmlFor="toDate">{t("to")}</Label>
           <Input id="toDate" name="to" type="date" defaultValue={toDate} />
         </div>
         <div className="flex flex-wrap items-end gap-2 md:col-span-2 lg:col-span-4">
           <Button type="submit" variant="secondary">
-            Apply filters
+            {tc("applyFilters")}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.push(BASE_PATH)}>
-            Clear
+            {tc("clear")}
           </Button>
           {isAdmin && total > 0 ? (
             <Button
@@ -198,7 +204,7 @@ export function HistoryManager({
                 setDeleteAllOpen(true);
               }}>
               <Trash2 className="h-4 w-4" />
-              Delete all
+              {t("deleteAll")}
             </Button>
           ) : null}
         </div>
@@ -209,54 +215,52 @@ export function HistoryManager({
       ) : null}
 
       {logs.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No checkout history found for these filters.
-        </p>
+        <p className="text-sm text-muted-foreground">{tc("noHistory")}</p>
       ) : (
         <>
           <p className="mb-2 text-xs text-muted-foreground sm:hidden">
-            Swipe horizontally to see all columns
+            {tc("swipeColumns")}
           </p>
           <div className="-mx-4 overflow-x-auto overscroll-x-contain rounded-lg border touch-pan-x sm:mx-0 [webkit-overflow-scrolling:touch]">
             <table
               className="w-full min-w-[56rem] text-sm"
-              aria-label="Checkout history">
+              aria-label={t("tableLabel")}>
               <thead className="border-b bg-muted/50">
                 <tr>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Tool
+                    {tc("tool")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Customer
+                    {tf("customer")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Checked out
+                    {tf("checkedOutAt")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Expected
+                    {tc("expected")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Checked in
+                    {tf("checkedInAt")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-left font-medium">
-                    Status
+                    {tf("status")}
                   </th>
                   <th
                     scope="col"
                     className="whitespace-nowrap px-4 py-3 text-right font-medium">
-                    Actions
+                    {tc("actions")}
                   </th>
                 </tr>
               </thead>
@@ -277,18 +281,22 @@ export function HistoryManager({
                         {log.customerEmployeeId} — {log.customerName}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                        <p>{formatDateTime(log.checkedOutAt)}</p>
-                        <p className="text-xs">by {log.checkedOutByName}</p>
+                        <p>{formatDateTime(log.checkedOutAt, locale)}</p>
+                        <p className="text-xs">
+                          {tc("byName", { name: log.checkedOutByName })}
+                        </p>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                        {formatDate(log.expectedReturnAt)}
+                        {formatDate(log.expectedReturnAt, locale)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                         {log.checkedInAt ? (
                           <>
-                            <p>{formatDateTime(log.checkedInAt)}</p>
+                            <p>{formatDateTime(log.checkedInAt, locale)}</p>
                             <p className="text-xs">
-                              by {log.checkedInByName ?? "—"}
+                              {log.checkedInByName
+                                ? tc("byName", { name: log.checkedInByName })
+                                : "—"}
                             </p>
                           </>
                         ) : (
@@ -298,10 +306,10 @@ export function HistoryManager({
                       <td className="whitespace-nowrap px-4 py-3">
                         {open ? (
                           <Badge variant={overdue ? "destructive" : "warning"}>
-                            {overdue ? "Overdue" : "Out"}
+                            {overdue ? tc("overdue") : tc("out")}
                           </Badge>
                         ) : (
-                          <Badge variant="success">Returned</Badge>
+                          <Badge variant="success">{tc("returned")}</Badge>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
@@ -310,7 +318,7 @@ export function HistoryManager({
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label="View note"
+                              aria-label={tc("viewNote")}
                               onClick={() => setViewingNotes(log)}>
                               <StickyNote className="h-4 w-4" />
                             </Button>
@@ -319,7 +327,7 @@ export function HistoryManager({
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label="Delete record"
+                              aria-label={t("deleteRecord")}
                               onClick={() => {
                                 setError(null);
                                 setDeleteTarget(log);
@@ -341,7 +349,11 @@ export function HistoryManager({
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {rangeStart}–{rangeEnd} of {total} records
+              {tc("showingRecords", {
+                from: rangeStart,
+                to: rangeEnd,
+                total,
+              })}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -349,17 +361,17 @@ export function HistoryManager({
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => applyFilters({ page: page - 1 })}>
-                Previous
+                {tc("previous")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                {tc("pageOf", { page, totalPages })}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => applyFilters({ page: page + 1 })}>
-                Next
+                {tc("next")}
               </Button>
             </div>
           </div>
@@ -369,7 +381,7 @@ export function HistoryManager({
       <Dialog open={!!viewingNotes} onOpenChange={() => setViewingNotes(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Notes</DialogTitle>
+            <DialogTitle>{tc("notes")}</DialogTitle>
             <DialogDescription>
               {viewingNotes?.toolLocalId} — {viewingNotes?.serialNumber}
             </DialogDescription>
@@ -377,7 +389,7 @@ export function HistoryManager({
           <CheckoutNotesDisplay notes={viewingNotes?.notes} />
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setViewingNotes(null)}>
-              Close
+              {tc("close")}
             </Button>
           </div>
         </DialogContent>
@@ -388,21 +400,23 @@ export function HistoryManager({
         onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete history record?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteRecordTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the checkout record for{" "}
-              {deleteTarget?.toolLocalId} ({deleteTarget?.serialNumber}).
-              {!deleteTarget?.checkedInAt
-                ? " The tool will be marked as checked in."
-                : null}{" "}
-              This cannot be undone.
+              {t("deleteRecordBody", {
+                id: deleteTarget?.toolLocalId ?? "",
+                serial: deleteTarget?.serialNumber ?? "",
+              })}
+              {!deleteTarget?.checkedInAt ? ` ${t("deleteRecordOpen")}` : null}{" "}
+              {tc("cannotUndo")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && deleteTarget ? <FormError>{error}</FormError> : null}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>
+              {tc("cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteRecord} disabled={loading}>
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? tc("deleting") : tc("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -411,18 +425,18 @@ export function HistoryManager({
       <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all history?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteAllTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the entire checkout history. Any
-              tools currently checked out will be marked as checked in. This
-              cannot be undone.
+              {t("deleteAllBody")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {error && deleteAllOpen ? <FormError>{error}</FormError> : null}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>
+              {tc("cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll} disabled={loading}>
-              {loading ? "Deleting..." : "Delete all"}
+              {loading ? tc("deleting") : t("deleteAll")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const createCustomerSchema = z.object({
-  employeeId: z.string().min(1, "Employee ID is required").max(100),
-  name: z.string().min(1, "Name is required").max(255),
-  specialization: z.string().min(1, "Specialization is required").max(255),
+  employeeId: z.string().min(1, "validation.employeeIdRequired").max(100),
+  name: z.string().min(1, "validation.nameRequired").max(255),
+  specialization: z.string().min(1, "validation.specializationRequired").max(255),
 });
 
 export const updateCustomerSchema = createCustomerSchema.extend({

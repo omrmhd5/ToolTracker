@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { LanguageToggle } from "@/components/language-toggle";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import { getRouteMeta } from "@/lib/app-routes";
 
 type AppShellLayoutProps = {
@@ -25,7 +27,11 @@ export function AppShellLayout({
   children,
 }: AppShellLayoutProps) {
   const pathname = usePathname();
-  const { title, description } = getRouteMeta(pathname);
+  const t = useTranslations("routes");
+  const tNav = useTranslations("nav");
+  const meta = getRouteMeta(pathname);
+  const title = t(`${meta.titleKey}.title`);
+  const description = t(`${meta.titleKey}.description`);
   const [mobileNavMounted, setMobileNavMounted] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -64,9 +70,9 @@ export function AppShellLayout({
   }, [mobileNavMounted, mobileNavOpen, closeMobileNav]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       <a href="#main-content" className="skip-link">
-        Skip to content
+        {tNav("skipToContent")}
       </a>
       <aside className="hidden h-full w-64 shrink-0 border-r lg:block">
         <SidebarNav
@@ -81,7 +87,7 @@ export function AppShellLayout({
         <div className="fixed inset-0 z-50 lg:hidden" role="presentation">
           <button
             type="button"
-            aria-label="Close navigation"
+            aria-label={tNav("closeNav")}
             data-state={mobileNavOpen ? "open" : "closed"}
             className="ui-drawer-backdrop absolute inset-0 bg-black/50"
             onClick={closeMobileNav}
@@ -105,7 +111,7 @@ export function AppShellLayout({
               size="icon"
               className="absolute right-2 top-3"
               onClick={closeMobileNav}
-              aria-label="Close menu">
+              aria-label={tNav("closeMenu")}>
               <X className="h-5 w-5" />
             </Button>
           </aside>
@@ -120,7 +126,7 @@ export function AppShellLayout({
             size="icon"
             className="shrink-0 lg:hidden"
             onClick={openMobileNav}
-            aria-label="Open menu">
+            aria-label={tNav("openMenu")}>
             <Menu className="h-5 w-5" />
           </Button>
           <div className="min-w-0 flex-1">
@@ -133,8 +139,9 @@ export function AppShellLayout({
               </p>
             ) : null}
           </div>
+          <LanguageToggle />
         </header>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div id="app-scroll" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {children}
         </div>
       </div>

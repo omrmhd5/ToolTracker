@@ -5,16 +5,16 @@ function formString(schema: z.ZodString) {
 }
 
 export const checkOutSchema = z.object({
-  toolLocalId: formString(z.string().min(1, "Tool is required")),
-  customerId: z.uuid("Customer is required"),
+  toolLocalId: formString(z.string().min(1, "validation.toolRequired")),
+  customerId: z.uuid("validation.customerRequired"),
   expectedReturnAt: formString(
-    z.string().min(1, "Expected return date is required"),
+    z.string().min(1, "validation.returnDateRequired"),
   ),
   notes: formString(z.string().max(2000)),
 });
 
 export const checkInSchema = z.object({
-  toolLocalId: formString(z.string().min(1, "Tool is required")),
+  toolLocalId: formString(z.string().min(1, "validation.toolRequired")),
   notes: formString(z.string().max(2000)),
 });
 

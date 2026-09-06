@@ -10,6 +10,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { tUi } from "@/lib/i18n";
 
 type SearchParams = Promise<{ status?: string; q?: string; page?: string }>;
 
@@ -41,15 +42,16 @@ export default async function AdminToolsPage({
     redirect("/dashboard");
   }
 
+  const hint = await tUi("adminTools.hint");
+  const loading = await tUi("common.loadingTools");
+
   return (
-    <Card>
+    <Card id="admin-tools-page">
       <CardHeader>
-        <CardDescription>
-          One row per physical tool. Search any field or filter by status.
-        </CardDescription>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading tools" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <ToolsContent searchParams={searchParams} />
         </Suspense>
       </CardContent>

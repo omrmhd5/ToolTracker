@@ -9,20 +9,28 @@ export type ActionResult<T = void> =
   | { success: true; data?: T }
   | { success: false; error: string };
 
-export function formatDate(date: Date | string | null | undefined) {
+export function formatDate(
+  date: Date | string | null | undefined,
+  locale?: string,
+) {
   if (!date) return "—";
   const value = typeof date === "string" ? new Date(date) : date;
-  return value.toLocaleDateString("en-US", {
+  const localeTag = locale === "ar" ? "ar-EG" : "en-US";
+  return value.toLocaleDateString(localeTag, {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 }
 
-export function formatDateTime(date: Date | string | null | undefined) {
+export function formatDateTime(
+  date: Date | string | null | undefined,
+  locale?: string,
+) {
   if (!date) return "—";
   const value = typeof date === "string" ? new Date(date) : date;
-  return value.toLocaleString("en-US", {
+  const localeTag = locale === "ar" ? "ar-EG" : "en-US";
+  return value.toLocaleString(localeTag, {
     year: "numeric",
     month: "short",
     day: "numeric",

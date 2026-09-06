@@ -10,6 +10,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { tUi } from "@/lib/i18n";
 
 type SearchParams = Promise<{ q?: string; page?: string }>;
 
@@ -40,15 +41,16 @@ export default async function AdminCustomersPage({
     redirect("/dashboard");
   }
 
+  const hint = await tUi("adminCustomers.hint");
+  const loading = await tUi("common.loadingCustomers");
+
   return (
-    <Card>
+    <Card id="admin-customers-page">
       <CardHeader>
-        <CardDescription>
-          People who receive tools. Employee ID must be unique.
-        </CardDescription>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading customers" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <CustomersContent searchParams={searchParams} />
         </Suspense>
       </CardContent>

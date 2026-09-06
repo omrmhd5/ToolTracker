@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { StickyNote } from "lucide-react";
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { CustomerWithCheckedOutTools } from "@/actions/customer-checkouts";
 import { CheckoutNotesDisplay } from "@/components/checkout-notes-display";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,11 @@ export function ToolsByCustomerManager({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
+  const t = useTranslations("toolsByCustomer");
+  const tc = useTranslations("common");
+  const tf = useTranslations("fields");
+
   const [viewingNotes, setViewingNotes] = useState<{
     toolLocalId: string;
     serialNumber: string;
@@ -72,30 +78,28 @@ export function ToolsByCustomerManager({
           });
         }}>
         <div className="min-w-0 flex-1 space-y-2">
-          <Label htmlFor="customerSearch">Search customers</Label>
+          <Label htmlFor="customerSearch">{t("searchLabel")}</Label>
           <Input
             id="customerSearch"
             name="q"
             defaultValue={searchQuery}
-            placeholder="Employee ID, name, or specialization"
+            placeholder={tc("searchCustomersPlaceholder")}
           />
         </div>
         <Button type="submit" variant="secondary" className="shrink-0">
-          Search
+          {tc("search")}
         </Button>
         <Button
           type="button"
           variant="outline"
           className="shrink-0"
           onClick={() => router.push(BASE_PATH)}>
-          Clear
+          {tc("clear")}
         </Button>
       </form>
 
       {customers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          No customers currently have tools checked out.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("noCustomers")}</p>
       ) : (
         <>
           <div className="space-y-4">
@@ -112,8 +116,7 @@ export function ToolsByCustomerManager({
                     variant={
                       customer.totalToolsOut > 0 ? "warning" : "secondary"
                     }>
-                    {customer.totalToolsOut}{" "}
-                    {customer.totalToolsOut === 1 ? "tool" : "tools"} out
+                    {t("toolsOut", { count: customer.totalToolsOut })}
                   </Badge>
                 </div>
 
@@ -122,31 +125,31 @@ export function ToolsByCustomerManager({
                     <thead className="border-b">
                       <tr>
                         <th className="px-4 py-2 text-left font-medium">
-                          Local ID
+                          {tf("localId")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Serial
+                          {tc("serial")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Part number
+                          {tf("partNumber")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Name
+                          {tc("name")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Location
+                          {tf("location")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Checked out
+                          {tf("checkedOutAt")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Expected
+                          {tc("expected")}
                         </th>
                         <th className="px-4 py-2 text-left font-medium">
-                          Status
+                          {tf("status")}
                         </th>
                         <th className="px-4 py-2 text-right font-medium">
-                          Notes
+                          {tc("notes")}
                         </th>
                       </tr>
                     </thead>
@@ -177,15 +180,15 @@ export function ToolsByCustomerManager({
                               {location || "—"}
                             </td>
                             <td className="px-4 py-2 text-muted-foreground">
-                              {formatDateTime(tool.checkedOutAt)}
+                              {formatDateTime(tool.checkedOutAt, locale)}
                             </td>
                             <td className="px-4 py-2 text-muted-foreground">
-                              {formatDate(tool.expectedReturnAt)}
+                              {formatDate(tool.expectedReturnAt, locale)}
                             </td>
                             <td className="px-4 py-2">
                               <Badge
                                 variant={overdue ? "destructive" : "warning"}>
-                                {overdue ? "Overdue" : "Out"}
+                                {overdue ? tc("overdue") : tc("out")}
                               </Badge>
                             </td>
                             <td className="px-4 py-2 text-right">
@@ -193,7 +196,7 @@ export function ToolsByCustomerManager({
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  aria-label="View note"
+                                  aria-label={tc("viewNote")}
                                   onClick={() =>
                                     setViewingNotes({
                                       toolLocalId: tool.toolLocalId,
@@ -214,8 +217,10 @@ export function ToolsByCustomerManager({
                   </table>
                   {customer.totalToolsOut > customer.tools.length ? (
                     <p className="px-4 py-2 text-sm text-muted-foreground">
-                      Showing {customer.tools.length} of{" "}
-                      {customer.totalToolsOut} checked-out tools.
+                      {t("showingOf", {
+                        shown: customer.tools.length,
+                        total: customer.totalToolsOut,
+                      })}
                     </p>
                   ) : null}
                 </div>
@@ -225,7 +230,11 @@ export function ToolsByCustomerManager({
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {rangeStart}–{rangeEnd} of {total} customers
+              {tc("showingCustomers", {
+                from: rangeStart,
+                to: rangeEnd,
+                total,
+              })}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -233,17 +242,17 @@ export function ToolsByCustomerManager({
                 size="sm"
                 disabled={page <= 1}
                 onClick={() => applyFilters({ page: page - 1 })}>
-                Previous
+                {tc("previous")}
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
+                {tc("pageOf", { page, totalPages })}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page >= totalPages}
                 onClick={() => applyFilters({ page: page + 1 })}>
-                Next
+                {tc("next")}
               </Button>
             </div>
           </div>
@@ -253,7 +262,7 @@ export function ToolsByCustomerManager({
       <Dialog open={!!viewingNotes} onOpenChange={() => setViewingNotes(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Notes</DialogTitle>
+            <DialogTitle>{tc("notes")}</DialogTitle>
             <DialogDescription>
               {viewingNotes?.toolLocalId} — {viewingNotes?.serialNumber}
             </DialogDescription>
@@ -261,7 +270,7 @@ export function ToolsByCustomerManager({
           <CheckoutNotesDisplay notes={viewingNotes?.notes} />
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => setViewingNotes(null)}>
-              Close
+              {tc("close")}
             </Button>
           </div>
         </DialogContent>

@@ -13,21 +13,22 @@ import {
 } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 const mainNav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/operations", label: "Check In / Out", icon: ArrowRightLeft },
-  { href: "/tools-by-customer", label: "Tools by Customer", icon: UserCheck },
-  { href: "/history", label: "History", icon: History },
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/operations", labelKey: "checkInOut", icon: ArrowRightLeft },
+  { href: "/tools-by-customer", labelKey: "toolsByCustomer", icon: UserCheck },
+  { href: "/history", labelKey: "history", icon: History },
 ];
 
 const adminNav = [
-  { href: "/admin/tools", label: "Tools", icon: Wrench },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/users", label: "Users", icon: Settings },
+  { href: "/admin/tools", labelKey: "tools", icon: Wrench },
+  { href: "/admin/customers", labelKey: "customers", icon: Users },
+  { href: "/admin/users", labelKey: "users", icon: Settings },
 ];
 
 type SidebarUser = {
@@ -62,6 +63,10 @@ export function SidebarNav({
   onNavigate?: () => void;
   className?: string;
 }) {
+  const t = useTranslations("nav");
+  const tApp = useTranslations("app");
+  const tRoles = useTranslations("roles");
+
   function renderLink(item: (typeof mainNav)[number]) {
     const Icon = item.icon;
     const active =
@@ -80,7 +85,7 @@ export function SidebarNav({
             : "ui-nav-link text-muted-foreground",
         )}>
         <Icon className="h-4 w-4 shrink-0" />
-        {item.label}
+        {t(item.labelKey)}
         <NavPendingIndicator />
       </Link>
     );
@@ -91,9 +96,9 @@ export function SidebarNav({
       <div className="flex h-14 shrink-0 items-center gap-2 border-b px-4 sm:h-16 sm:px-6">
         <AppLogo size={32} />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">Tool Tracker</p>
+          <p className="truncate text-sm font-semibold">{tApp("name")}</p>
           <p className="truncate text-xs text-muted-foreground">
-            Inventory system
+            {tApp("tagline")}
           </p>
         </div>
       </div>
@@ -102,7 +107,7 @@ export function SidebarNav({
         aria-label="Main navigation"
         className="min-h-0 flex-1 space-y-1 overflow-y-auto p-4">
         <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Operations
+          {t("operations")}
         </p>
         {mainNav.map(renderLink)}
 
@@ -110,7 +115,7 @@ export function SidebarNav({
           <>
             <Separator className="my-4" />
             <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Admin
+              {t("admin")}
             </p>
             {adminNav.map(renderLink)}
           </>
@@ -125,7 +130,7 @@ export function SidebarNav({
               {user.email}
             </p>
             <p className="mt-1 text-xs capitalize text-muted-foreground">
-              {user.role}
+              {user.role === "admin" ? tRoles("admin") : tRoles("user")}
             </p>
           </div>
         ) : null}
@@ -136,7 +141,7 @@ export function SidebarNav({
           className="w-full"
           onClick={() => signOut({ callbackUrl: "/login" })}>
           <LogOut className="h-4 w-4" />
-          Sign out
+          {t("signOut")}
         </Button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { and, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { checkoutLogs, tools } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth-utils";
+import { tError, tZod } from "@/lib/i18n";
 import { revalidateToolData } from "@/lib/revalidate-app";
 import { createToolSchema, updateToolSchema } from "@/lib/validations/tool";
 import type { ActionResult } from "@/lib/utils";
@@ -128,7 +129,7 @@ export async function createTool(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -143,7 +144,7 @@ export async function createTool(
   if (existingLocalId) {
     return {
       success: false,
-      error: "A tool with this local ID already exists",
+      error: await tError("errors.localIdTaken"),
     };
   }
 
@@ -156,7 +157,7 @@ export async function createTool(
   if (existingSerial) {
     return {
       success: false,
-      error: "A tool with this serial number already exists",
+      error: await tError("errors.serialTaken"),
     };
   }
 
@@ -191,7 +192,7 @@ export async function updateTool(
   if (!parsed.success) {
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? "Invalid input",
+      error: await tZod(parsed.error.issues[0]?.message),
     };
   }
 
@@ -204,11 +205,11 @@ export async function updateTool(
     .limit(1);
 
   if (!existing) {
-    return { success: false, error: "Tool not found" };
+    return { success: false, error: await tError("errors.toolNotFound") };
   }
 
   if (data.localId.trim() !== originalLocalId) {
-    return { success: false, error: "Local ID cannot be changed" };
+    return { success: false, error: await tError("errors.localIdImmutable") };
   }
 
   const [existingSerial] = await db
@@ -220,7 +221,7 @@ export async function updateTool(
   if (existingSerial && existingSerial.localId !== originalLocalId) {
     return {
       success: false,
-      error: "A tool with this serial number already exists",
+      error: await tError("errors.serialTaken"),
     };
   }
 
@@ -258,7 +259,7 @@ export async function deleteTool(localId: string): Promise<ActionResult> {
     .where(eq(tools.localId, localId))
     .limit(1);
   if (!existing) {
-    return { success: false, error: "Tool not found" };
+    return { success: false, error: await tError("errors.toolNotFound") };
   }
 
   const [openCheckout] = await db
@@ -275,8 +276,7 @@ export async function deleteTool(localId: string): Promise<ActionResult> {
   if (openCheckout || existing.status === "OUT") {
     return {
       success: false,
-      error:
-        "Cannot delete a tool that is currently checked out. Check it in first.",
+      error: await tError("errors.cannotDeleteCheckedOutTool"),
     };
   }
 

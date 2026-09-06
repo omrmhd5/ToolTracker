@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type AppLogoProps = {
@@ -8,13 +7,23 @@ type AppLogoProps = {
 
 export function AppLogo({ className, size = 40 }: AppLogoProps) {
   return (
-    <Image
-      src="/Logo.png"
-      alt="Tool Tracker"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
       width={size}
       height={size}
-      className={cn("shrink-0 rounded-full object-cover", className)}
-      priority
-    />
+      role="img"
+      aria-label="Tool Tracker"
+      className={cn("shrink-0", className)}>
+      <rect width="32" height="32" rx="8" fill="#31487a" />
+      <path
+        d="M13.2 8.2l2.1 2.1-1.8 1.8 1.6 1.6 1.8-1.8 2.1 2.1c.8.8 2.1.8 2.9 0l.7-.7-6.1-6.1-.7.7c-.8.8-.8 2.1 0 2.9z"
+        fill="#f8fafc"
+      />
+      <path
+        d="M9 20.2l6.4-6.4 2.8 2.8L11.8 23c-.7.7-1.9.7-2.6 0-.8-.7-.8-1.9-.2-2.8z"
+        fill="#f8fafc"
+      />
+    </svg>
   );
 }

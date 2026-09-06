@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+import { tUi } from "@/lib/i18n";
 import { auth } from "@/lib/auth";
 
 type SearchParams = Promise<{
@@ -47,15 +48,16 @@ export default async function HistoryPage({
   const session = await auth();
   const isAdmin = session?.user?.role === "admin";
 
+  const hint = await tUi("history.hint");
+  const loading = await tUi("common.loadingHistory");
+
   return (
-    <Card>
+    <Card id="history-page">
       <CardHeader>
-        <CardDescription>
-          Filter by tool, customer, or checkout date range.
-        </CardDescription>
+        <CardDescription>{hint}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Suspense fallback={<PageLoading label="Loading history" />}>
+        <Suspense fallback={<PageLoading label={loading} />}>
           <HistoryContent searchParams={searchParams} isAdmin={isAdmin} />
         </Suspense>
       </CardContent>
