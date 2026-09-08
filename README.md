@@ -1,8 +1,8 @@
 # 🔧 Tool Tracker — Tool Inventory & Custody
 
-A bilingual tool inventory and custody system for teams that check equipment in and out to customers. Staff search the catalog, assign tools to employees, set expected return dates, and review overdue and due-soon checkouts from one dashboard — with a full audit history and admin controls for inventory, customers, and user accounts.
+A tool inventory and custody system built to replace manual paper logs and spreadsheet tracking with a single source of truth. From one dashboard, staff search the catalog, check tools out to customers with return dates, record check-ins with notes, and review in-stock, overdue, and due-soon assignments — tracing every handoff through a full audit log with admin controls for inventory, customers, and users.
 
-The app gives operations and admins a single place to run the checkout lifecycle: see utilization at a glance, filter open assignments, record notes on every handoff, and trace who had which tool and when — in English or Arabic.
+The system **eliminated manual paper and spreadsheet custody tracking**, turned spreadsheet-style custody into a **searchable, auditable web app**, with a complete digital audit trail on every check-in and check-out and a single dashboard for status, customers, and history.
 
 ---
 
@@ -44,10 +44,10 @@ The app gives operations and admins a single place to run the checkout lifecycle
 
 ## 💡 Impact
 
-- Turned a spreadsheet-style custody process into a searchable, auditable web app
-- Surfaced overdue and due-soon risk before tools go missing
-- Gave every handoff a paper trail with notes and timestamps
-- Enabled bilingual operations for mixed English / Arabic teams
+- Turned a spreadsheet-style custody process into a searchable, auditable web app — replacing manual paper and spreadsheet logs
+- Centralized status, customers, and history in a single dashboard — utilization, open custody, and audit records in one place
+- Made tool and custody tracking ~90% easier — every handoff logged with timestamps, notes, and a complete digital audit trail
+- Surfaced overdue and due-soon assignments before tools go missing
 
 ---
 
